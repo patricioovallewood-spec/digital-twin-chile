@@ -14,7 +14,7 @@
       -33.428
     ],
     "boundary_verified": true,
-    "scope": "Comuna recortada a cartografía del servicio Censo"
+    "scope": "Objetos que intersectan el límite de la capa comunal consultada"
   },
   "built_at": "2026-10-14T20:52:44.275563+00:00",
   "datasets": [
@@ -28,7 +28,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -71,19 +71,31 @@
     },
     {
       "id": "buildings",
-      "name": "Edificios OSM · 3D",
+      "name": "Edificación · volúmenes 3D",
       "group": "Territorio",
       "geometry": "polygon",
       "color": "#79a8b2",
-      "provider": "OpenStreetMap contributors",
-      "url": "https://www.openstreetmap.org/copyright",
-      "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
-      "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
-      "status": "unavailable",
-      "count": null,
-      "error": "HTTP Error 504: Gateway Timeout",
-      "checked_at": "2026-10-14T20:52:44.275563+00:00"
+      "status": "ready",
+      "count": 174,
+      "path": "data/buildings.geojson",
+      "provider": "OpenFreeMap · OpenMapTiles · OpenStreetMap contributors",
+      "url": "https://openfreemap.org/quick_start/",
+      "reference": "Instantánea cartográfica; fecha OSM de cada objeto no verificada",
+      "license": "Datos OpenStreetMap bajo ODbL 1.0; atribución OpenFreeMap, OpenMapTiles y OpenStreetMap contributors. https://www.openstreetmap.org/copyright",
+      "retrieved_at": "2026-10-14T21:08:48.379862+00:00",
+      "sha256": "458cd1a19469ebc278d3d0ad47fc72cec888bdd812f82771e60374f51f09958b",
+      "tilejson_url": "https://tiles.openfreemap.org/planet",
+      "tile_template": "https://tiles.openfreemap.org/planet/20261011_080001_pt/{z}/{x}/{y}.pbf",
+      "tiles_downloaded": 25,
+      "download_bytes": 6202719,
+      "source_fields": [
+        "colour",
+        "render_height",
+        "render_min_height"
+      ],
+      "height_count": 173,
+      "unknown_height_count": 1,
+      "note": "Volúmenes cartográficos derivados de teselas z14. Pueden ser partes de edificios; NO es un conteo de edificios únicos ni un catastro oficial. Altura render_height cartográfica, no certificada como medida; 0,6 m simbólicos si falta. Buffers eliminados recortando cada tesela y el área piloto. No hay alturas estimadas desde terreno. No sustituye levantamiento predial."
     },
     {
       "id": "census",
@@ -127,7 +139,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -151,7 +163,7 @@
     },
     {
       "id": "culture",
-      "name": "Cultura y deporte",
+      "name": "Cultura, deporte y piscinas",
       "group": "Servicios",
       "geometry": "point",
       "color": "#dc90c8",
@@ -159,7 +171,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -205,7 +217,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -225,7 +237,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -330,7 +342,7 @@
       "url": "https://www.openstreetmap.org/copyright",
       "license": "ODbL 1.0 · atribución a OpenStreetMap contributors",
       "reference": "Instantánea OSM, no catastro oficial",
-      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera.",
+      "note": "Cobertura colaborativa no exhaustiva. Un cero no demuestra ausencia. Polígonos complejos no reconstruidos pueden quedar fuera. El registro no confirma acceso público, capacidad, horarios ni funcionamiento actual; puede incluir instalaciones privadas.",
       "source_edited_at": "2026-10-14T20:54:37Z",
       "query_endpoint": "https://overpass-api.de/api/interpreter",
       "status": "ready",
@@ -436,5 +448,6 @@
       "color": "#6c808c"
     }
   ],
-  "methodology": "Inventario descriptivo de registros públicos. Filtros por punto representativo, no tiempo de caminata. Conteos de objetos heterogéneos no son indicadores de calidad de vida. No se trasladaron datos ni código del portal de referencia."
+  "methodology": "Inventario descriptivo de registros públicos. Filtros por punto representativo, no tiempo de caminata. Conteos de objetos heterogéneos no son indicadores de calidad de vida. No se trasladaron datos ni código del portal de referencia.",
+  "buildings_added_at": "2026-10-14T21:08:48.379862+00:00"
 }

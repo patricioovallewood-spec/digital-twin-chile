@@ -46,10 +46,19 @@ def browser_check(engine,name,url,live=False):
  assert page.evaluate('DTC.snapshot().count')>0
  initial=page.evaluate('DTC.snapshot()')
  if live:
+  page.wait_for_timeout(3500)
+  assert page.evaluate('DTC.mapSnapshot().renderedCount')>0
   page.screenshot(path=str(OUT/'atlas-live.png'),full_page=True)
   page.click('#closePanel');page.screenshot(path=str(OUT/'atlas-live-map.png'))
   REPORT.append({'test':'deployed live map','result':'PASS','snapshot':initial})
   assert not errors,errors;ctx.close();browser.close();return
+ # Verify real 3D volume data and actual rendered map features.
+ page.locator('.rail [data-preset=buildings]').click();settle(page)
+ page.wait_for_timeout(3500)
+ assert page.evaluate('DTC.snapshot().counts.buildings')>100
+ assert page.evaluate('DTC.mapSnapshot().renderedCount')>0
+ assert any(l['id']=='dtc-buildings-extrusion' and l['visibility']=='visible' for l in page.evaluate('DTC.mapSnapshot().ownLayers'))
+ page.screenshot(path=str(OUT/(name+'-buildings.png')),full_page=True)
  # Preset changes must change data layers, not just button styles.
  page.locator('.presets [data-preset=commerce]').click();settle(page)
  assert set(page.evaluate('DTC.snapshot().active'))<={'boundary','commerce','health'}
