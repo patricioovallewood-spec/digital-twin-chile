@@ -40,3 +40,7 @@ El proyecto no requiere compilación. Usa Leaflet y tipografías externas median
 **Datos abiertos. Inteligencia compartida. Mejores decisiones.**
 
 Proyecto orientado al bien público digital, no a la comercialización. Diferenciar siempre registros observados, estimaciones y simulaciones, y respetar licencias, privacidad y restricciones de cada fuente.
+
+## Publicación
+
+El despliegue se automatiza mediante `.github/workflows/deploy.yml` al actualizar `main`. En Settings → Pages debe estar seleccionada la fuente **GitHub Actions**.
