@@ -1,0 +1,20 @@
+name: Atlas source audit
+on:
+  push:
+    branches: ['feat/atlas-territorial-v04']
+    paths: ['scripts/audit_sources.py', '.github/workflows/atlas-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - run: python scripts/audit_sources.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-source-audit
+          path: test-results/
