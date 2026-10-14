@@ -1,0 +1,97 @@
+name: Review Nunoa reference
+on:
+  push:
+    branches: ['review/cerebro-nunoa-reference']
+    paths: ['.github/workflows/review-nunoa-reference.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Install inspection browser
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Read the user-provided public reference
+        run: |
+          mkdir -p reference-review
+          python - <<'PY'
+          import json, re, pathlib, urllib.request, urllib.parse, time
+          from html.parser import HTMLParser
+          from playwright.sync_api import sync_playwright
+          base='https://cerebro-nunoa.vercel.app/'
+          out=pathlib.Path('reference-review')
+          report={'target':base,'checked_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'documents':[],'screens':[],'requests':[],'errors':[]}
+          def get(url):
+              req=urllib.request.Request(url,headers={'User-Agent':'DigitalTwinChile-ReferenceReview/1.0','Accept':'text/html,application/json,text/javascript,*/*'})
+              with urllib.request.urlopen(req,timeout=30) as r:
+                  data=r.read(5000000)
+                  return r.status,r.headers.get('Content-Type',''),data.decode('utf-8','replace')
+          class Parser(HTMLParser):
+              def __init__(self):super().__init__();self.scripts=[];self.links=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='script' and a.get('src'):self.scripts.append(a['src'])
+                  if tag=='a' and a.get('href'):self.links.append(a['href'])
+          try:
+              status,ct,html=get(base)
+              (out/'index.html').write_text(html)
+              report['http']={'status':status,'content_type':ct,'size':len(html)}
+              parser=Parser();parser.feed(html)
+              report['scripts']=parser.scripts
+              report['links']=parser.links
+              texts=[('index.html',html)]
+              for i,src in enumerate(parser.scripts[:12]):
+                  url=urllib.parse.urljoin(base,src)
+                  if urllib.parse.urlparse(url).netloc!=urllib.parse.urlparse(base).netloc:continue
+                  try:
+                      status,ct,text=get(url)
+                      name='script-'+str(i)+'.js'
+                      (out/name).write_text(text)
+                      texts.append((name,text))
+                      report['documents'].append({'url':url,'status':status,'size':len(text),'file':name})
+                  except Exception as e:report['errors'].append({'url':url,'error':str(e)})
+              for name,text in texts:
+                  urls=sorted(set(re.findall(r'https?://[^\s\x22\x27<>`\\)]+',text)))
+                  paths=sorted(set(re.findall(r'[\x22\x27`]([^\x22\x27`\n]{1,160}\.(?:json|geojson|csv|pmtiles|pbf|parquet)(?:\?[^\x22\x27`\n]*)?)[\x22\x27`]',text)))
+                  repo=sorted(set(re.findall(r'https://github\.com/[^\s\x22\x27<>`\\)]+',text)))
+                  keywords=['maplibre','mapbox','deck.gl','cesium','censo','alumbrado','luminaria','permiso','fuente','licencia','simulad','estimad','synthetic','mock','geojson']
+                  snippets={}
+                  for k in keywords:
+                      matches=list(re.finditer(re.escape(k),text,re.I))
+                      snippets[k]=[text[max(0,m.start()-100):m.end()+230] for m in matches[:5]]
+                  report.setdefault('code_inspection',[]).append({'file':name,'urls':urls[:100],'data_paths':paths[:100],'repositories':repo,'snippets':snippets})
+              with sync_playwright() as p:
+                  browser=p.chromium.launch(args=['--enable-webgl','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+                  page=browser.new_page(viewport={'width':1536,'height':1000})
+                  page.on('pageerror',lambda e:report['errors'].append({'browser':str(e)}))
+                  def on_response(r):
+                      if r.request.resource_type in ['fetch','xhr'] and len(report['requests'])<90:
+                          report['requests'].append({'url':r.url,'status':r.status,'type':r.headers.get('content-type','')})
+                  page.on('response',on_response)
+                  # Do not automate tile downloads from the community OSM tile service.
+                  page.route('**.tile.openstreetmap.org/**',lambda r:r.abort())
+                  for view in ['#gemelo','#fuentes']:
+                      page.goto(base+view,wait_until='domcontentloaded',timeout=60000)
+                      page.wait_for_timeout(14000 if view=='#gemelo' else 6000)
+                      text=page.locator('body').inner_text()
+                      (out/(view[1:]+'.txt')).write_text(text)
+                      report['screens'].append({'view':view,'title':page.title(),'text':text[:26000],'links':page.locator('a[href]').evaluate_all('(xs)=>xs.map(x=>({text:x.innerText,url:x.href}))')[:100]})
+                      page.screenshot(path=str(out/(view[1:]+'.png')),full_page=True)
+                  browser.close()
+          except Exception as e:
+              report['errors'].append({'fatal':str(e)})
+          (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          print('REFERENCE_REVIEW_BEGIN')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          print('REFERENCE_REVIEW_END')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nunoa-reference-review
+          path: reference-review/
+          retention-days: 3
