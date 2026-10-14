@@ -12,6 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -19,12 +20,45 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Validate and stage application only
+        run: |
+          node --check app.js
+          mkdir -p _site
+          cp index.html styles.css app.js .nojekyll _site/
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static website
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Install smoke-test browser
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Verify deployed code and live filter interaction
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import os, time, urllib.request
+          url = os.environ['SITE_URL'].rstrip('/') + '/app.js?v=' + os.environ['GITHUB_SHA']
+          for attempt in range(12):
+              try:
+                  code = urllib.request.urlopen(url, timeout=15).read().decode()
+                  if "version:'0.3.1'" in code:
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('Published app.js does not contain the expected filter version')
+          PY
+          python tests/test_filters.py --live --url "$SITE_URL"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployed-filter-check
+          path: test-results/
