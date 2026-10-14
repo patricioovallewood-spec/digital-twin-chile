@@ -21,7 +21,7 @@ export function circleFeature(point,metres){const ring=[],lat=point[1]*Math.PI/1
 export const emptyCollection=()=>({type:'FeatureCollection',features:[]});
 export function csv(features,metadata){
  const cell=value=>{let s=String(value??'');if(/^[\s]*[=+@]/.test(s)||/^\s*-[^\d]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
- const header=['id','capa','nombre','rubro','longitud_representativa','latitud_representativa','fuente','referencia','fecha_extraccion','metodo','proveedor','condiciones_de_uso'];
+ const header=['id','capa','nombre','rubro','longitud_representativa','latitud_representativa','fuente','referencia','fecha_extraccion','metodo','proveedor','condiciones_de_uso','proveedor','condiciones_de_uso'];
  const lines=features.map(f=>{const p=f.properties,d=metadata.find(x=>x.id===p.layer)||{};return [p.id,d.name,p.name,p.rubro,p.x,p.y,d.url,d.reference,d.retrieved_at,'Punto representativo; cobertura y fechas segun fuente',d.provider,d.license].map(cell).join(',');});
  return '\uFEFF'+header.map(cell).join(',')+'\r\n'+lines.join('\r\n');
 }
