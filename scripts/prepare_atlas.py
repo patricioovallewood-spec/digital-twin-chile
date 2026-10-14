@@ -27,8 +27,12 @@ OCUC='https://services9.arcgis.com/kKJR3Qt68ohAWuet/arcgis/rest/services/'
 REG=[]; BOUNDARY=None
 
 def request(url,params=None,timeout=45,raw=False):
- if params:url+='?'+urllib.parse.urlencode(params)
- req=urllib.request.Request(url,headers={'User-Agent':'DigitalTwinChile/0.4 public municipal pilot','Accept':'application/json,*/*'})
+ payload=None
+ if params:
+  encoded=urllib.parse.urlencode(params)
+  if '/query' in url and len(encoded)>1300:payload=encoded.encode()
+  else:url+='?'+encoded
+ req=urllib.request.Request(url,data=payload,headers={'User-Agent':'DigitalTwinChile/0.4 public municipal pilot','Accept':'application/json,*/*','Content-Type':'application/x-www-form-urlencoded'})
  with urllib.request.urlopen(req,timeout=timeout) as r:
   data=r.read(80000000)
  if raw:return data
@@ -57,8 +61,8 @@ def arc_features(url,fields,where='1=1',bbox=True):
  ids=request(url+'/query',params).get('objectIds') or []
  if len(ids)>90000:raise ValueError('Excede el limite de seguridad del piloto')
  result=[]
- for n in range(0,len(ids),1000):
-  q={'f':'geojson','objectIds':','.join(map(str,ids[n:n+1000])),'outFields':','.join(fields),'outSR':'4326','returnGeometry':'true','geometryPrecision':'6'}
+ for n in range(0,len(ids),250):
+  q={'f':'geojson','objectIds':','.join(map(str,ids[n:n+250])),'outFields':','.join(fields),'outSR':'4326','returnGeometry':'true','geometryPrecision':'6'}
   page=request(url+'/query',q)
   if page.get('exceededTransferLimit'):raise ValueError('Fuente trunco la pagina')
   result.extend(page.get('features',[]))
@@ -204,7 +208,20 @@ for building_mode in [False,True]:
   if building_mode:terms=['way["building"]']
   else:terms=['nwr["shop"]','nwr["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy|school|university|college|kindergarten|restaurant|cafe|bar|fast_food|bank|marketplace|library|theatre|cinema|community_centre|veterinary|animal_shelter)$"]','nwr["leisure"~"^(park|garden|playground|dog_park|sports_centre|pitch|swimming_pool)$"]','nwr["public_transport"~"^(platform|station)$"]','nwr["highway"="bus_stop"]','nwr["railway"~"^(station|subway_entrance)$"]']
   query='[out:json][timeout:45];('+''.join(t+'('+boxtext+');' for t in terms)+');out body geom;'
-  obj,endpoint=overpass(query);groups={r[0]:[] for r in rows}
+  if building_mode:
+   # Four geographic queries, sequential, deduplicated by OSM id.
+   midx=(BBOX[0]+BBOX[2])/2;midy=(BBOX[1]+BBOX[3])/2
+   cells=[(BBOX[0],BBOX[1],midx,midy),(midx,BBOX[1],BBOX[2],midy),(BBOX[0],midy,midx,BBOX[3]),(midx,midy,BBOX[2],BBOX[3])]
+   parts={};timestamps=[]
+   for west,south,east,north in cells:
+    q='[out:json][timeout:45];way["building"]('+','.join(map(str,[south,west,north,east]))+');out body geom;'
+    part,endpoint=overpass(q)
+    for el in part.get('elements',[]):parts[(el['type'],el['id'])]=el
+    if part.get('osm3s',{}).get('timestamp_osm_base'):timestamps.append(part['osm3s']['timestamp_osm_base'])
+    time.sleep(1.2)
+   obj={'elements':list(parts.values()),'osm3s':{'timestamp_osm_base':min(timestamps) if timestamps else None}}
+  else:obj,endpoint=overpass(query)
+  groups={r[0]:[] for r in rows}
   for el in obj.get('elements',[]):
    t=el.get('tags',{});geom=osm_geom(el)
    if not geom:continue

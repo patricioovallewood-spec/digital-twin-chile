@@ -51,7 +51,7 @@ function addDatasetLayers(d){
  if(d.id==='buildings')map.addLayer({...base,id:source+'-extrusion',type:'fill-extrusion',filter:polygon,paint:{'fill-extrusion-color':['case',['==',['get','height_quality'],'Altura declarada OSM'],'#b4d8dc',['==',['get','height_quality'],'Estimada: 3 m por piso OSM'],'#789ba8','#526770'],'fill-extrusion-height':['to-number',['get','height'],.6],'fill-extrusion-base':0,'fill-extrusion-opacity':.88}});
 }
 function drawAll(){
- if(!mapReady||!map?.isStyleLoaded())return;
+ if(!mapReady||!map?.getStyle())return;
  for(const d of defs.filter(x=>x.status==='ready')){
   if(!cache.has(d.id)&&!map.getSource('dtc-'+d.id))continue;
   addDatasetLayers(d);
@@ -122,7 +122,7 @@ function layerList(){
 function markPreset(name){document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));}
 function preset(name){
  state.active=new Set((presets[name]||presets.overview).filter(id=>defs.some(d=>d.id===id&&d.status==='ready')));
- state.query='';state.business='all';state.heightQuality='all';state.permitYear='all';$('search').value='';$('business').value='all';$('heightQuality').value='all';$('permitYear').value='all';markPreset(name);selectedFeature=null;
+ state.query='';state.business='all';state.heightQuality='all';state.permitYear='all';$('search').value='';$('business').value='all';$('heightQuality').value='all';$('permitYear').value='all';markPreset(name);selectedFeature=null;$('featureDetail').innerHTML='<span class="muted">Selecciona un objeto para ver su ficha.</span>';
  if(name==='buildings'){state.three=true;$('threeBtn').setAttribute('aria-pressed','true');map?.easeTo({pitch:55,duration:650});}
  ensureActive();
 }
