@@ -1,0 +1,53 @@
+name: Atlas acceptance
+on:
+  push:
+    branches: ['feat/atlas-territorial-v04']
+    paths: ['atlas/**', 'tests/test_atlas.py', 'scripts/stabilize_atlas.py', '.github/workflows/atlas-acceptance.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: atlas-acceptance
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/feat/atlas-territorial-v04'
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Harden source clients
+        run: python scripts/stabilize_atlas.py
+      - name: Install source and browser dependencies
+        run: |
+          pip install shapely==2.1.1 playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Prepare independently sourced snapshots
+        run: python scripts/prepare_atlas.py
+      - name: Validate JavaScript
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+      - name: Browser acceptance using actual snapshots
+        run: python tests/test_atlas.py
+      - name: Persist tested source and snapshots on development branch
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas scripts/prepare_atlas.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: persist tested public snapshots and atlas hardening'
+            git push origin HEAD:feat/atlas-territorial-v04
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-acceptance-build
+          path: |
+            atlas/
+            scripts/
+            tests/test_atlas.py
+            test-results/
+          retention-days: 14
