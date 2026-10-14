@@ -1,0 +1,29 @@
+name: Export atlas working copy
+on:
+  push:
+    branches: ['test/atlas-local-export']
+    paths: ['.github/workflows/export-atlas.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download initial public snapshots for local UI tests
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-data
+          run-id: 38634837577
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: atlas
+      - run: python scripts/stabilize_atlas.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-working-copy
+          path: |
+            atlas/
+            scripts/
+            tests/
+          retention-days: 7
