@@ -9,68 +9,33 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: filters-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test browser
+      - name: Install browsers
         run: |
           pip install playwright==1.55.0
-          python -m playwright install --with-deps chromium
+          python -m playwright install --with-deps chromium webkit
       - name: Syntax check
-        run: node --check app.js
-      - name: Diagnose deployed filters
         run: |
-          mkdir -p test-results
-          python - <<'PY'
-          import json, pathlib
-          from playwright.sync_api import sync_playwright
-          report = {'errors': [], 'requests': [], 'checks': []}
-          with sync_playwright() as p:
-              browser = p.chromium.launch()
-              page = browser.new_page(viewport={'width': 1440, 'height': 1000})
-              page.on('pageerror', lambda e: report['errors'].append(str(e)))
-              page.on('requestfailed', lambda r: report['requests'].append({'url': r.url, 'error': r.failure}))
-              page.on('response', lambda r: report['requests'].append({'url': r.url, 'status': r.status}) if 'overpass' in r.url else None)
-              page.goto('https://patricioovallewood-spec.github.io/digital-twin-chile/', wait_until='networkidle', timeout=60000)
-              report['checks'].append({'initial': page.locator('#mapstatus').inner_text(), 'filters': page.locator('#layers input').count()})
-              page.select_option('#place', 'providencia')
-              page.wait_for_timeout(1600)
-              page.check('#layers input[value=parks]')
-              try:
-                  page.wait_for_function("document.getElementById('count').textContent !== '\u2014' || document.getElementById('mapstatus').textContent.includes('No se pudo')", timeout=40000)
-              except Exception as e:
-                  report['errors'].append('Layer request did not finish within 40 seconds')
-              report['checks'].append({'parks_status': page.locator('#mapstatus').inner_text(), 'parks_count': page.locator('#count').inner_text()})
-              page.select_option('#radius', '400')
-              report['checks'].append({'radius_without_point': page.locator('#analysisNote').inner_text()})
-              page.screenshot(path='test-results/before.png', full_page=True)
-              probe = page.evaluate('''async () => {
-                const endpoints = ['https://overpass.kumi.systems/api/interpreter','https://overpass-api.de/api/interpreter'];
-                const results = [];
-                for (const endpoint of endpoints) {
-                  const ctrl = new AbortController(); const timer = setTimeout(()=>ctrl.abort(),18000);
-                  try {
-                    const query = '[out:json][timeout:10];nwr["amenity"="pharmacy"](around:600,-33.428,-70.612);out center 40;';
-                    const res = await fetch(endpoint+'?'+new URLSearchParams({data:query}),{signal:ctrl.signal});
-                    const text=await res.text(); let parsed; try{parsed=JSON.parse(text)}catch{}
-                    results.push({endpoint,status:res.status,elements:parsed?.elements?.length,remark:parsed?.remark,body:text.slice(0,120)});
-                  }catch(e){results.push({endpoint,error:String(e)})}finally{clearTimeout(timer)}
-                }
-                return results;
-              }''')
-              report['probe'] = probe
-              browser.close()
-          pathlib.Path('test-results/diagnosis.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
-          print(json.dumps(report, ensure_ascii=False, indent=2))
-          PY
+          node --check app.js
+          python -m py_compile tests/test_filters.py
+      - name: Regression checks on checked-out code
+        run: python tests/test_filters.py
+      - name: Live OSM integration check
+        if: success()
+        run: python tests/test_filters.py --live
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: filter-diagnosis
+          name: filter-tests-${{ github.sha }}
           path: test-results/
