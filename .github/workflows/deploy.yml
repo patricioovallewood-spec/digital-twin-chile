@@ -12,19 +12,54 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Configure Pages
+      - uses: actions/checkout@v4
+      - name: Install test browsers
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Validate snapshots and behavior before publishing
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          python tests/test_atlas.py
+      - name: Prepare Pages
         uses: actions/configure-pages@v5
-      - name: Upload static website
+      - name: Upload application only
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
-      - name: Deploy to GitHub Pages
+          path: atlas
+      - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published version and live map
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          python - <<'PY'
+          import os, time, urllib.request
+          url=os.environ['SITE_URL'].rstrip('/')+'/core.mjs?release='+os.environ['GITHUB_SHA']
+          for attempt in range(18):
+              try:
+                  code=urllib.request.urlopen(url,timeout=15).read().decode()
+                  if "VERSION='0.4.0'" in code:
+                      break
+              except Exception:
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('The expected atlas version is not publicly available yet')
+          PY
+          python tests/test_atlas.py --live-url "${SITE_URL}?v=${GITHUB_SHA}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-atlas-evidence
+          path: test-results/
+          retention-days: 30

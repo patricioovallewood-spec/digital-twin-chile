@@ -1,0 +1,189 @@
+import {VERSION,escapeHTML as esc,filterFeatures,circleFeature,emptyCollection,csv,serialise} from './core.mjs';
+const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('es-CL');
+const state={active:new Set(),query:'',radius:0,focus:null,business:'all',heightQuality:'all',permitYear:'all',base:'satellite',mode:'points',three:true};
+const cache=new Map(),filtered=new Map(),loads=new Map(),errors=new Map(),signatures=new Map();
+let manifest,defs=[],map=null,mapReady=false,currentRecords=[],selectedFeature=null,toastTimer;
+const presets={overview:['boundary','buildings','parks','mobility'],people:['boundary','census','health','education'],commerce:['boundary','commerce','health'],mobility:['boundary','cycling','mobility'],green:['boundary','parks','trees'],infrastructure:['boundary','lights'],planning:['boundary','permits','buildings'],buildings:['boundary','buildings']};
+const colors={};
+function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
+function date(value){if(!value)return 'No declarada';const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleDateString('es-CL',{day:'2-digit',month:'short',year:'numeric'}):String(value);}
+function safeLink(url,label='Abrir fuente ↗'){try{const u=new URL(url);return ['https:','http:'].includes(u.protocol)?'<a target="_blank" rel="noopener" href="'+esc(u.href)+'">'+esc(label)+'</a>':'';}catch{return '';}}
+function status(text,kind='ready'){$('status').textContent=text;$('status').dataset.state=kind;}
+async function fetchTimed(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),40000);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return r;}finally{clearTimeout(t);}}
+function mapStyle(){
+ if(state.base==='dark')return 'https://tiles.openfreemap.org/styles/dark';
+ if(state.base==='streets')return 'https://tiles.openfreemap.org/styles/liberty';
+ return {version:8,sources:{satellite:{type:'raster',tileSize:256,tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],attribution:'Tiles © Esri · Maxar · Earthstar Geographics · fecha de imagen variable'}},layers:[{id:'background',type:'background',paint:{'background-color':'#182c35'}},{id:'satellite-base',type:'raster',source:'satellite',paint:{'raster-saturation':-.38,'raster-brightness-max':.72}}]};
+}
+function initMap(){
+ try{
+  if(!window.maplibregl)throw Error('No se pudo cargar MapLibre.');
+  map=new maplibregl.Map({container:'map',style:mapStyle(),center:manifest.territory.center,zoom:13.8,pitch:state.three?48:0,bearing:-12,attributionControl:false,maxPitch:68});
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+  map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'Capas: Fuentes · © OpenStreetMap contributors · © OpenMapTiles · OpenFreeMap'}),'bottom-right');
+  map.on('style.load',()=>{mapReady=true;signatures.clear();drawAll();});
+  map.on('error',e=>{console.warn('Map source:',e.error?.message||e.message);});
+  map.on('moveend',()=>{const c=map.getCenter();$('cameraLabel').textContent=c.lat.toFixed(4)+' / '+c.lng.toFixed(4)+' · Z'+map.getZoom().toFixed(1);});
+  map.on('click',e=>{
+   const layerIds=defs.flatMap(d=>['-point','-fill','-line','-extrusion'].map(s=>'dtc-'+d.id+s)).filter(id=>map.getLayer(id)&&!id.includes('boundary'));
+   const hit=map.queryRenderedFeatures(e.point,{layers:layerIds}).find(f=>f.properties?.id);
+   if(hit){const f=currentRecords.find(x=>x.properties.id===hit.properties.id);if(f){showFeature(f);return;}}
+   state.focus=[e.lngLat.lng,e.lngLat.lat];if(!state.radius)state.radius=800;$('radius').value=String(state.radius);selectedFeature=null;render();
+  });
+  const cam=new URL(location.href).searchParams.get('camera')?.split(',').map(Number);
+  if(cam?.length===3&&cam.every(Number.isFinite)&&Math.abs(cam[0])<=180&&Math.abs(cam[1])<85&&cam[2]>=2&&cam[2]<=19)map.jumpTo({center:cam.slice(0,2),zoom:cam[2]});
+ }catch(error){$('mapFailure').hidden=false;$('mapFailure').textContent='El mapa 3D no pudo iniciarse en este navegador. Los filtros y la tabla siguen disponibles. '+error.message;$('threeBtn').disabled=true;}
+}
+function addDatasetLayers(d){
+ const source='dtc-'+d.id;
+ if(map.getSource(source))return;
+ map.addSource(source,{type:'geojson',data:emptyCollection(),promoteId:'id'});
+ const base={source,layout:{visibility:'none'}};
+ if(d.id==='boundary'){
+  map.addLayer({...base,id:source+'-line',type:'line',paint:{'line-color':d.color,'line-width':2.2,'line-opacity':.85}});return;
+ }
+ const polygon=['==',['geometry-type'],'Polygon'],line=['==',['geometry-type'],'LineString'],point=['==',['geometry-type'],'Point'];
+ const fill=d.id==='census'?['case',['has','n_per'],['step',['to-number',['get','n_per'],0],'#32444f',1,'#c5d2ef',50,'#8dacdf',150,'#5889ce',350,'#3866ae',800,'#9e71cc'],'#697681']:d.color;
+ map.addLayer({...base,id:source+'-fill',type:'fill',filter:polygon,paint:{'fill-color':fill,'fill-opacity':d.id==='census'?.66:.31,'fill-outline-color':d.color}});
+ map.addLayer({...base,id:source+'-line',type:'line',filter:line,paint:{'line-color':d.color,'line-width':d.id==='cycling'?3:1.5,'line-opacity':.88}});
+ map.addLayer({...base,id:source+'-point',type:'circle',filter:point,paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,2,15,d.id==='trees'||d.id==='lights'?3:4.5,18,7],'circle-color':d.color,'circle-opacity':.85,'circle-stroke-width':.7,'circle-stroke-color':'#0b212a'}});
+ map.addLayer({...base,id:source+'-heat',type:'heatmap',filter:point,paint:{'heatmap-weight':1,'heatmap-intensity':.8,'heatmap-radius':22,'heatmap-opacity':.72,'heatmap-color':['interpolate',['linear'],['heatmap-density'],0,'rgba(0,0,0,0)',.25,'#316b96',.5,d.color,.85,'#ffe5a6',1,'#fff1d1']}});
+ if(d.id==='buildings')map.addLayer({...base,id:source+'-extrusion',type:'fill-extrusion',filter:polygon,paint:{'fill-extrusion-color':['case',['==',['get','height_quality'],'Altura declarada OSM'],'#b4d8dc',['>', ['to-number',['get','height'],0],1],'#8aadb9','#526770'],'fill-extrusion-height':['to-number',['get','height'],.6],'fill-extrusion-base':0,'fill-extrusion-opacity':.88}});
+}
+function drawAll(){
+ if(!mapReady||!map?.getStyle())return;
+ for(const d of defs.filter(x=>x.status==='ready')){
+  if(!cache.has(d.id)&&!map.getSource('dtc-'+d.id))continue;
+  addDatasetLayers(d);
+  const features=filtered.get(d.id)||[],key=features.map(f=>f.id).join('|');
+  if(signatures.get(d.id)!==key){map.getSource('dtc-'+d.id).setData({type:'FeatureCollection',features});signatures.set(d.id,key);}
+  for(const suffix of ['line','point','fill','heat','extrusion']){
+   const id='dtc-'+d.id+'-'+suffix;if(!map.getLayer(id))continue;
+   let on=state.active.has(d.id);
+   if(suffix==='heat')on=on&&state.mode==='heat';
+   if(suffix==='point')on=on&&state.mode!=='heat';
+   if(d.id==='buildings'&&suffix==='fill')on=on&&!state.three;
+   if(suffix==='extrusion')on=on&&state.three;
+   map.setLayoutProperty(id,'visibility',on?'visible':'none');
+  }
+ }
+ if(!map.getSource('selection')){map.addSource('selection',{type:'geojson',data:emptyCollection()});map.addLayer({id:'selection-fill',type:'fill',source:'selection',paint:{'fill-color':'#75efcb','fill-opacity':.05}});map.addLayer({id:'selection-line',type:'line',source:'selection',paint:{'line-color':'#a4f2dc','line-width':2,'line-dasharray':[3,2]}});}
+ map.getSource('selection').setData(state.focus&&state.radius?circleFeature(state.focus,state.radius):emptyCollection());
+ if(map.getLayer('dtc-boundary-line'))map.moveLayer('dtc-boundary-line');
+ map.moveLayer('selection-line');
+}
+async function loadLayer(id){
+ if(cache.has(id)||loads.has(id))return loads.get(id);
+ const d=defs.find(d=>d.id===id);if(!d||d.status!=='ready')return;
+ errors.delete(id);
+ const promise=(async()=>{
+  const r=await fetchTimed(d.path+'?sha='+d.sha256.slice(0,12));const bytes=await r.arrayBuffer();
+  if(crypto.subtle){const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(v=>v.toString(16).padStart(2,'0')).join('');if(digest!==d.sha256)throw Error('La instantánea no coincide con su manifiesto.');}
+  const obj=JSON.parse(new TextDecoder().decode(bytes));if(obj.type!=='FeatureCollection'||!Array.isArray(obj.features)||obj.features.length!==d.count)throw Error('Recuento de la instantánea no válido.');
+  cache.set(id,obj.features);
+  if(id==='permits'){
+   const values=[...new Set(obj.features.map(f=>f.properties['AÑO']).filter(x=>Number.isInteger(Number(x))))].sort((a,b)=>a-b);
+   $('permitYear').innerHTML='<option value="all">Todos los años disponibles</option>'+values.map(y=>'<option>'+esc(y)+'</option>').join('');$('permitYear').value=state.permitYear;
+  }
+ })().catch(e=>errors.set(id,e.name==='AbortError'?'Tiempo de descarga agotado.':e.message)).finally(()=>{loads.delete(id);render();});
+ loads.set(id,promise);render();return promise;
+}
+function ensureActive(){for(const id of state.active)void loadLayer(id);render();}
+function render(){
+ if(!manifest)return;
+ filtered.clear();currentRecords=[];
+ for(const d of defs){const f=filterFeatures(cache.get(d.id)||[],d.id,state);filtered.set(d.id,f);if(d.id!=='boundary')currentRecords.push(...f);}
+ const pending=[...state.active].filter(id=>!cache.has(id)&&!errors.has(id));
+ const failed=[...state.active].filter(id=>errors.has(id));
+ const available=[...state.active].filter(id=>cache.has(id)&&id!=='boundary');
+ $('recordCount').textContent=pending.length&&!available.length?'—':failed.length&&!available.length?'—':fmt(currentRecords.length);
+ $('activeCount').textContent=String(state.active.size);
+ $('scopeLabel').textContent=(state.radius?'Radio de '+fmt(state.radius)+' m · referencia geométrica. ':manifest.territory.scope+'. ')+(pending.length||failed.length?'Resultado parcial. ':'')+'No equivale al total visible en la cámara.';
+ if(failed.length)status('No se pudieron abrir '+failed.join(', ')+'. Desactiva y reactiva para reintentar.','error');
+ else if(pending.length)status('Cargando instantáneas: '+pending.map(id=>defs.find(d=>d.id===id)?.name).join(', ')+'…','loading');
+ else status(state.active.size?fmt(currentRecords.length)+' objetos · filtros aplicados · '+(state.radius?fmt(state.radius)+' m':'área piloto'):'Sin capas activas. Selecciona una capa o una vista.');
+ for(const d of defs){
+  const input=$('layer-'+d.id),count=$('count-'+d.id);if(!input)continue;
+  input.checked=state.active.has(d.id);input.closest('label').classList.toggle('checked',input.checked);
+  count.textContent=input.checked?(errors.has(d.id)?'Error':cache.has(d.id)?fmt(filtered.get(d.id).length):'…'):fmt(d.count);
+ }
+ $('breakdown').innerHTML=defs.filter(d=>state.active.has(d.id)&&d.id!=='boundary').map(d=>'<div class="breakdown-row"><span><i style="background:'+d.color+'"></i>'+esc(d.name)+'</span><b>'+(cache.has(d.id)?fmt(filtered.get(d.id).length):errors.has(d.id)?'Error':'…')+'</b></div>').join('');
+ $('legend').innerHTML=defs.filter(d=>state.active.has(d.id)).map(d=>'<div><span class="swatch" style="background:'+d.color+'"></span>'+esc(d.name)+'</div>').join('')+(state.active.has('census')?'<div class="legend-note">Censo: personas/manzana · 0, 1–49, 50–149, 150–349, 350–799, 800+. Gris: sin dato.</div>':'')+(state.active.has('buildings')?'<div class="legend-note">3D: volúmenes cartográficos, no edificios únicos. Azul = altura derivada; gris = volumen simbólico. No medición verificada.</div>':'')+(state.mode==='heat'?'<div class="legend-note">Concentración visual de registros. No es flujo de peatones ni temperatura.</div>':'');
+ $('exportCsv').disabled=!currentRecords.length||pending.length>0||failed.length>0;$('exportGeo').disabled=$('exportCsv').disabled;
+ if(selectedFeature&&!currentRecords.some(f=>f.id===selectedFeature.id)){selectedFeature=null;$('featureDetail').innerHTML='<span class="muted">Selecciona un objeto para ver su ficha y procedencia.</span>';}
+ drawAll();
+}
+function layerList(){
+ const groups=[...new Set(defs.filter(d=>d.status==='ready').map(d=>d.group))];
+ $('layers').innerHTML=groups.map(g=>'<div class="group-title">'+esc(g)+'</div>'+defs.filter(d=>d.group===g&&d.status==='ready').map(d=>'<label class="layer-row"><input type="checkbox" id="layer-'+d.id+'" value="'+d.id+'"><span class="name">'+esc(d.name)+'<small>'+esc(d.reference)+'</small></span><span class="layer-count" id="count-'+d.id+'">'+fmt(d.count)+'</span></label>').join('')).join('');
+ const notReady=defs.filter(d=>d.status!=='ready');$('pendingNote').textContent=notReady.length+' capas pendientes o sin acceso. No se muestran filtros vacíos. Consulta el catálogo.';
+ $('layers').addEventListener('change',e=>{const id=e.target.value;if(!defs.some(d=>d.id===id))return;if(e.target.checked)state.active.add(id);else state.active.delete(id);markPreset(null);ensureActive();});
+}
+function markPreset(name){document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));}
+function preset(name){
+ state.active=new Set((presets[name]||presets.overview).filter(id=>defs.some(d=>d.id===id&&d.status==='ready')));
+ const missing=(presets[name]||[]).filter(id=>!defs.some(d=>d.id===id&&d.status==='ready'));if(missing.length)toast('Sin datos preparados para: '+missing.join(', ')+'. Consulta Fuentes.');
+ state.query='';state.business='all';state.heightQuality='all';state.permitYear='all';$('search').value='';$('business').value='all';$('heightQuality').value='all';$('permitYear').value='all';markPreset(name);selectedFeature=null;$('featureDetail').innerHTML='<span class="muted">Selecciona un objeto para ver su ficha.</span>';
+ if(name==='buildings'){state.three=true;$('threeBtn').setAttribute('aria-pressed','true');map?.easeTo({pitch:55,duration:650});}
+ ensureActive();
+}
+function showFeature(f){
+ selectedFeature=f;const p=f.properties,d=defs.find(d=>d.id===p.layer);
+ const keys=['rubro','calle','CALLE','ESPECIE','NOMBRE_CIENTIFICO','ALTURA','ESTADO_GENERAL','ESTADO_FITOSANITARIO','POTENCIA1','MODELO1','TPOSTE','n_per','prom_edad','n_edad_0_5','n_edad_60_mas','n_hog','AÑO','NUM_PISOS','SUPERFICIE','height','floors','height_quality'];
+ const labels={height:'Altura cartográfica (m)',floors:'Pisos OSM',height_quality:'Origen de altura',n_per:'Personas (2024)',prom_edad:'Edad promedio',n_edad_0_5:'Personas de 0 a 5',n_edad_60_mas:'Personas de 60+',n_hog:'Hogares','AÑO':'Año del permiso',POTENCIA1:'Potencia (campo fuente)'};
+ $('featureDetail').innerHTML='<h3>'+esc(p.name)+'</h3><span class="badge">'+esc(d.name)+'</span><dl>'+keys.filter(k=>p[k]!==undefined&&p[k]!==null).map(k=>'<dt>'+esc(labels[k]||d.field_aliases?.[k]||k)+'</dt><dd>'+esc(p[k])+'</dd>').join('')+'</dl><p>'+esc(d.reference)+' · extracción '+date(d.retrieved_at)+'</p><p>'+esc(d.note)+'</p>'+safeLink(d.url,'Fuente del registro ↗');
+ if(window.innerWidth<=700){openDialog('Ficha del registro',$('featureDetail').innerHTML);}
+}
+function openDialog(title,html){$('dialogTitle').textContent=title;$('dialogBody').innerHTML=html;if(!$('dialog').open)$('dialog').showModal();}
+function catalogue(){
+ const label={ready:'Preparada',pending:'Pendiente',unavailable:'No disponible'};
+ openDialog('Fuentes, vigencia y alcance','<p>Una capa preparada ha superado comprobaciones técnicas de descarga, formato, identificadores y conteo. <strong>No es una certificación de calidad estadística ni una licencia automática de reutilización.</strong> Las fechas de edición no equivalen al periodo observado. No hay actualización en tiempo real.</p><p>'+esc(manifest.territory.scope)+' · instantánea construida el '+date(manifest.built_at)+'.</p><table><thead><tr><th>CAPA Y ALCANCE</th><th>ORIGEN / REFERENCIA</th><th>ESTADO</th><th>REGISTROS</th></tr></thead><tbody>'+defs.map(d=>'<tr><td><strong>'+esc(d.name)+'</strong><details><summary>Metodología y condiciones</summary><p>'+esc(d.note)+'</p><p>'+esc(d.license||'Condiciones pendientes de verificar.')+'</p><p>Cuenta publicadora: '+esc(d.owner||d.provider)+'. Datos editados: '+date(d.source_edited_at)+'. Extraídos: '+date(d.retrieved_at)+'.</p>'+(d.error?'<p>'+esc(d.error)+'</p>':'')+(d.sha256?'<code>SHA-256 '+esc(d.sha256)+'</code>':'')+'</details></td><td>'+esc(d.provider)+'<br>'+esc(d.reference)+'<br>'+safeLink(d.url)+'</td><td><span class="badge '+d.status+'">'+label[d.status]+'</span></td><td>'+(d.count===null||d.count===undefined?'—':fmt(d.count))+'</td></tr>').join('')+'</tbody></table>');
+}
+function table(){openDialog('Registros de la selección','<p>'+fmt(currentRecords.length)+' objetos en el mismo filtro del mapa. Vista previa de los primeros 200; la exportación incluye todos. Las coordenadas representan el objeto, no necesariamente una entrada accesible.</p><table><thead><tr><th>NOMBRE</th><th>CAPA</th><th>RUBRO</th><th>ACCIÓN</th></tr></thead><tbody>'+currentRecords.slice(0,200).map(f=>'<tr><td>'+esc(f.properties.name)+'</td><td>'+esc(defs.find(d=>d.id===f.properties.layer)?.name)+'</td><td>'+esc(f.properties.rubro||'—')+'</td><td><button class="small-btn" data-feature="'+esc(f.id)+'">Ver</button></td></tr>').join('')+'</tbody></table>');$('dialogBody').querySelectorAll('[data-feature]').forEach(b=>b.onclick=()=>{const f=currentRecords.find(x=>x.id===b.dataset.feature);if(!f)return;$('dialog').close();showFeature(f);map?.flyTo({center:[f.properties.x,f.properties.y],zoom:16,duration:650});});}
+function download(text,type,name){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function controls(){
+ document.querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>preset(b.dataset.preset));
+ $('noneBtn').onclick=()=>{state.active.clear();markPreset(null);render();};
+ $('allBtn').onclick=()=>{state.active=new Set(defs.filter(d=>d.status==='ready').map(d=>d.id));markPreset(null);ensureActive();};
+ let searchTimer;$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{state.query=$('search').value;render();},150);};
+ $('clearSearch').onclick=()=>{$('search').value='';state.query='';render();};
+ $('radius').onchange=()=>{state.radius=Number($('radius').value);if(state.radius&&!state.focus){const c=map?.getCenter();state.focus=c?[c.lng,c.lat]:manifest.territory.center;}if(!state.radius)state.focus=null;render();};
+ $('visualMode').onchange=()=>{state.mode=$('visualMode').value;render();};
+ $('business').onchange=()=>{state.business=$('business').value;state.active=new Set(['boundary','commerce','health'].filter(id=>defs.some(d=>d.id===id&&d.status==='ready')));markPreset('commerce');ensureActive();};
+ $('heightQuality').onchange=()=>{state.heightQuality=$('heightQuality').value;render();};
+ $('permitYear').onchange=()=>{state.permitYear=$('permitYear').value;render();};
+ $('basemap').onchange=()=>{state.base=$('basemap').value;if(map){mapReady=false;map.setStyle(mapStyle());}};
+ $('threeBtn').onclick=()=>{state.three=!state.three;$('threeBtn').setAttribute('aria-pressed',String(state.three));map?.easeTo({pitch:state.three?50:0,duration:600});drawAll();};
+ $('homeBtn').onclick=()=>map?.flyTo({center:manifest.territory.center,zoom:13.8,bearing:-12,pitch:state.three?48:0,duration:700});
+ $('fullscreenBtn').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.querySelector('.map-stage').requestFullscreen();}catch{toast('Pantalla completa no disponible en este navegador.');}};
+ $('clearBtn').onclick=()=>{state.radius=0;state.focus=null;$('radius').value='0';preset('overview');};
+ $('exportCsv').onclick=()=>download(csv(currentRecords,defs),'text/csv;charset=utf-8','digital-twin-chile-seleccion.csv');
+ $('exportGeo').onclick=()=>download(JSON.stringify({type:'FeatureCollection',features:currentRecords,metadata:{version:VERSION,exported_at:new Date().toISOString(),scope:manifest.territory.scope,method:manifest.methodology,sources:defs.filter(d=>state.active.has(d.id))}}),'application/geo+json','digital-twin-chile-seleccion.geojson');
+ $('shareBtn').onclick=async()=>{const link=serialise(state,map);try{await navigator.clipboard.writeText(link);toast('Enlace con tus filtros copiado.');}catch{openDialog('Compartir vista','<p>Copia este enlace:</p><textarea readonly style="width:100%;height:110px">'+esc(link)+'</textarea>');}};
+ for(const id of ['sourcesNav','catalogBtn'])$(id).onclick=catalogue;
+ $('tableBtn').onclick=table;
+ $('aboutBtn').onclick=()=>openDialog('Un piloto, con límites claros','<p>Digital Twin Chile es una infraestructura de inteligencia territorial orientada al bien público. Esta versión contiene un piloto de Ñuñoa, no todas las comunas del país.</p><p>'+esc(manifest.territory.scope)+'.</p><p>Los filtros operan sobre instantáneas locales con fecha y huella digital. No se consultan servicios externos cada vez que marcas una capa. El mapa base sí depende del proveedor cartográfico.</p><p>La visualización 3D usa polígonos y alturas cartográficas OpenMapTiles, con origen OSM, o volúmenes simbólicos de 0,6 metros cuando falta altura. Son partes cartográficas, no edificios únicos; sus alturas no están verificadas como mediciones. No hay terreno 3D calibrado ni simulación física.</p><p>El radio se calcula por punto representativo de cada objeto. No mide recorrido caminable ni reparte habitantes entre sectores. Los conteos de distintas categorías no miden calidad de vida.</p><p>Flujos peatonales, datos de delincuencia, natalidad, normativa vigente y sistemas municipales privados siguen pendientes cuando así lo indica el catálogo. Las fuentes de terceros conservan sus propias condiciones de uso.</p>');
+ $('closeDialog').onclick=()=>$('dialog').close();
+ function panel(open){$('explorer').hidden=!open;$('panelBtn').setAttribute('aria-expanded',String(open));}
+ $('panelBtn').onclick=()=>panel($('explorer').hidden);$('closePanel').onclick=()=>panel(false);
+ $('inspectToggle').onclick=()=>{$('inspectorBody').hidden=!$('inspectorBody').hidden;$('inspectToggle').textContent=$('inspectorBody').hidden?'+':'−';};
+}
+function restore(){
+ const u=new URL(location.href).searchParams;state.active=new Set((u.get('layers')||presets.overview.join(',')).split(',').filter(id=>defs.some(d=>d.id===id&&d.status==='ready')));
+ if(u.has('layers')&&!u.get('layers'))state.active.clear();
+ state.query=(u.get('q')||'').slice(0,200);$('search').value=state.query;
+ const f=(u.get('focus')||'').split(',').map(Number),r=Number(u.get('radius'));
+ if(f.length===2&&f.every(Number.isFinite)&&Math.abs(f[0])<=180&&Math.abs(f[1])<85&&[400,800,1500].includes(r)){state.focus=f;state.radius=r;}$('radius').value=String(state.radius);
+ for(const [param,key,id,values] of [['business','business','business',['all','pharmacy','books','supermarket','cafe','restaurant','convenience','hairdresser']],['base','base','basemap',['satellite','dark','streets']],['mode','mode','visualMode',['points','heat']],['height','heightQuality','heightQuality',['all','known']]])if(values.includes(u.get(param))){state[key]=u.get(param);$(id).value=state[key];}
+ if(/^\d{4}$/.test(u.get('year')||''))state.permitYear=u.get('year');state.three=u.get('three')!=='false';$('threeBtn').setAttribute('aria-pressed',String(state.three));
+}
+async function start(){
+ try{
+  manifest=await (await fetchTimed('data/manifest.json?v='+VERSION)).json();
+  if(!Array.isArray(manifest.datasets)||!manifest.territory)throw Error('Manifiesto no válido.');
+  defs=manifest.datasets;defs.forEach(d=>colors[d.id]=d.color);$('datasetCount').textContent=String(defs.filter(d=>d.status==='ready').length);$('snapshotDate').textContent='INSTANTÁNEA / '+date(manifest.built_at);$('provenance').textContent='Fuentes y periodos distintos · consulta el catálogo · '+manifest.territory.scope;
+  layerList();restore();controls();initMap();ensureActive();
+  window.DTC=Object.freeze({version:VERSION,snapshot:()=>({version:VERSION,active:[...state.active],loading:[...loads.keys()].filter(id=>state.active.has(id)),errors:[...errors.keys()].filter(id=>state.active.has(id)),counts:Object.fromEntries([...filtered].map(([k,f])=>[k,f.length])),count:currentRecords.length,records:currentRecords.map(f=>({id:f.id,layer:f.properties.layer,rubro:f.properties.rubro})),radius:state.radius,focus:state.focus,mapReady,base:state.base,mode:state.mode,three:state.three,sourceCount:defs.filter(d=>d.status==='ready').length}),mapSnapshot:()=>map?{loaded:map.loaded(),pitch:map.getPitch(),renderedCount:mapReady?map.queryRenderedFeatures().filter(f=>f.layer.id.startsWith('dtc-')).length:0,ownLayers:(map.getStyle()?.layers||[]).filter(l=>l.id.startsWith('dtc-')).map(l=>({id:l.id,visibility:map.getLayoutProperty(l.id,'visibility')}))}:null});
+ }catch(error){status('No se pudo abrir el catálogo: '+error.message,'error');$('mapFailure').hidden=false;$('mapFailure').textContent='El catálogo o sus archivos no están disponibles. No se muestran datos de demostración ni valores inventados.';}
+}
+start();

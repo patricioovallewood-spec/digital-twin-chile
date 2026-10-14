@@ -1,0 +1,22 @@
+name: Atlas public data
+on:
+  push:
+    branches: ['feat/atlas-territorial-v04']
+    paths: ['scripts/prepare_atlas.py', '.github/workflows/atlas-data.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install shapely==2.1.1
+      - run: python scripts/prepare_atlas.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-data
+          path: atlas/
+          retention-days: 30

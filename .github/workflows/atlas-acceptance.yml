@@ -1,0 +1,23 @@
+name: Atlas acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          python tests/test_atlas.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-regression
+          path: test-results/

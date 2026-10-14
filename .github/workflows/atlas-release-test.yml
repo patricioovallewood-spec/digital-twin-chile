@@ -1,0 +1,52 @@
+name: Atlas release validation
+on:
+  push:
+    branches: ['feat/atlas-territorial-v04']
+    paths: ['scripts/build_cartographic_buildings.py', 'scripts/release_atlas_quality.py', 'scripts/split_building_volumes.py', '.github/workflows/atlas-release-test.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: atlas-release-test
+  cancel-in-progress: true
+jobs:
+  release:
+    if: github.ref == 'refs/heads/feat/atlas-territorial-v04'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install geospatial and browser dependencies
+        run: |
+          pip install shapely==2.1.1 mapbox-vector-tile==2.2.0 playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Bounded cartographic building snapshot
+        run: python scripts/build_cartographic_buildings.py
+      - name: Apply documented quality and per-volume rules
+        run: |
+          python scripts/release_atlas_quality.py
+          python scripts/split_building_volumes.py
+      - name: Syntax and acceptance tests
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          python tests/test_atlas.py
+      - name: Persist only tested data and application
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas tests/test_atlas.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix: spatially correct individual building volumes and readable controls'
+            git push origin HEAD:feat/atlas-territorial-v04
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-release-evidence
+          path: |
+            atlas/
+            scripts/
+            tests/test_atlas.py
+            test-results/
+          retention-days: 30
