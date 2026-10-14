@@ -81,7 +81,14 @@
     $('mapstatus').textContent=text;
   }
   function scopeSpec(){
-    if(focus){const lat=focus.lat.toFixed(5),lon=focus.lng.toFixed(5);return {key:'circle:'+lat+','+lon,query:'(around:'+MAX_RADIUS+','+lat+','+lon+')'};}
+    // A bounded candidate query avoids the expensive Overpass around geometry scan.
+    // The actual 400/800/1500 m test remains map.distance in filteredRows().
+    if(focus){
+      const lat=focus.lat.toFixed(5),lon=focus.lng.toFixed(5);
+      const b=focus.toBounds(2*(MAX_RADIUS+25));
+      const bbox=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].map(v=>v.toFixed(5)).join(',');
+      return {key:'circle:'+lat+','+lon,query:'('+bbox+')'};
+    }
     const b=map.getBounds();
     if(map.getZoom()<14||map.distance(b.getSouthWest(),b.getNorthEast())>12000)return null;
     const bbox=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].map(v=>v.toFixed(5)).join(',');
@@ -152,7 +159,7 @@
     $('analysisNote').textContent=ready.length?pretty(rows.length)+' registros '+scopeText+'.'+(pending.length||failed.length||limited?' Resultado parcial.':''):'Activa categorías y espera su carga para analizar.';
     const times=ready.map(d=>stateFor(d.id).sourceTimestamp).filter(Boolean).sort();
     const fetchTimes=ready.map(d=>stateFor(d.id).retrieved).filter(Boolean).sort();
-    $('sourceTime').textContent=ready.length?'Última consulta: '+dateLabel(fetchTimes[fetchTimes.length-1])+'. Base OSM más antigua entre las capas: '+dateLabel(times[0])+'. La fecha de consulta no es la fecha de cada objeto.':'';
+    $('sourceTime').textContent=ready.length?'Última consulta: '+dateLabel(fetchTimes[fetchTimes.length-1])+'. Base OSM: '+dateLabel(times[0])+'. La fecha de consulta no equivale a la fecha de actualización de cada objeto.':'';
     const max=Math.max(1,...defs.map(d=>rows.filter(p=>p.categories.includes(d.label)).length));
     $('breakdown').innerHTML=active.map(d=>{
       const bucket=stateFor(d.id),n=rows.filter(p=>p.categories.includes(d.label)).length;
