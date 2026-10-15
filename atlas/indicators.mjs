@@ -1,5 +1,5 @@
 /* Non-spatial observations must never be counted or located as map objects. */
-import {escapeHTML as esc} from './core.mjs';
+import {escapeHTML as esc} from './core.mjs?v=060';
 export function installIndicators({manifest,openDialog,download,safeLink}) {
  const $=id=>document.getElementById(id),cache=new Map();
  const find=id=>manifest.datasets.find(x=>x.id===id);
@@ -20,7 +20,7 @@ export function installIndicators({manifest,openDialog,download,safeLink}) {
  async function show(id='births'){
   const own=++dialogGeneration;
   if(id==='dependencies'){
-   openDialog('Lo que todavía requiere acceso',menu(id)+'<p>No hay datos inventados ni conexiones privadas simuladas. Estas dependencias impiden completar los siguientes dominios.</p>'+['licenses','pedestrians','municipal'].map(k=>{const d=find(k);return '<article class="evidence-card"><h3>'+esc(d.name)+'</h3><span class="badge">'+esc(labels[d.status]||d.status)+'</span><p>'+esc(d.note)+'</p>'+safeLink(d.url)+'</article>';}).join('')+'<p>Un archivo público no autoriza a publicar datos personales. Las integraciones futuras deben acordar campos permitidos, finalidad, periodo, cobertura y control de acceso.</p>');wire();return;
+   openDialog('Lo que todavía requiere acceso',menu(id)+'<p>No hay conexiones privadas activas. Las capas opcionales DEMO del mapa son sintéticas y no resuelven estas dependencias institucionales.</p>'+['licenses','pedestrians','municipal'].map(k=>{const d=find(k);return '<article class="evidence-card"><h3>'+esc(d.name)+'</h3><span class="badge">'+esc(labels[d.status]||d.status)+'</span><p>'+esc(d.note)+'</p>'+safeLink(d.url)+'</article>';}).join('')+'<h3>Ruta de integración preparada conceptualmente</h3><div class="integration-flow"><div><b>01 · Autorizar</b><span>Acordar finalidad, campos publicables, cobertura y responsable municipal.</span></div><div><b>02 · Validar</b><span>Adaptador de solo lectura en servidor. Comprobar geometría, fechas, IDs y calidad.</span></div><div><b>03 · Versionar</b><span>Publicar una instantánea aprobada y conservar la última válida ante errores.</span></div></div><p><strong>Estado: sin conexión.</strong> No hay endpoint municipal operativo ni credenciales guardadas. El contrato es conceptual.</p><p><a href="integration-contract.json" download="contrato-integracion-municipal.json">Descargar contrato conceptual JSON ↓</a></p><p>Un archivo público no autoriza a publicar datos personales. Las integraciones futuras deben acordar campos permitidos, finalidad, periodo, cobertura y control de acceso.</p>');wire();return;
   }
   const d=find(id);if(!d)return;
   openDialog(d.name,menu(id)+'<p role="status">Cargando datos documentados…</p>');wire();

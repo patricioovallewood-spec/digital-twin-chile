@@ -1,5 +1,5 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "territory": {
     "name": "Ñuñoa",
     "code": "13120",
@@ -504,10 +504,49 @@
       "path": "data/zoning.json",
       "sha256": "0422e40374a99cf88e81e233c9bd0c49ea65861ed8355417a2e159458c00a062",
       "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
+    },
+    {
+      "id": "demoZoning",
+      "name": "DEMO · Zonificación ficticia",
+      "group": "Demostración · datos sintéticos",
+      "status": "ready",
+      "is_demo": true,
+      "geometry": "polygon",
+      "color": "#ce9aee",
+      "provider": "Escenario sintético del prototipo",
+      "reference": "DEMOSTRACIÓN · no corresponde a información municipal",
+      "note": "Geometrías, atributos y montos ficticios para probar la experiencia. No representan normativa, cartera ni inversión real. No se mezclan con las instantáneas de fuentes públicas.",
+      "license": "Datos sintéticos creados para el prototipo.",
+      "url": "",
+      "retrieved_at": null,
+      "generated_at": "2026-10-15",
+      "path": "data/demoZoning.geojson",
+      "count": 4,
+      "sha256": "45cbd3dabee9317508ab221334a5fd39b9cfca064ee1b35ad0c91662e7a0bd19"
+    },
+    {
+      "id": "demoWorks",
+      "name": "DEMO · Obras e inversión ficticias",
+      "group": "Demostración · datos sintéticos",
+      "status": "ready",
+      "is_demo": true,
+      "geometry": "point",
+      "color": "#f5ba75",
+      "provider": "Escenario sintético del prototipo",
+      "reference": "DEMOSTRACIÓN · no corresponde a información municipal",
+      "note": "Geometrías, atributos y montos ficticios para probar la experiencia. No representan normativa, cartera ni inversión real. No se mezclan con las instantáneas de fuentes públicas.",
+      "license": "Datos sintéticos creados para el prototipo.",
+      "url": "",
+      "retrieved_at": null,
+      "generated_at": "2026-10-15",
+      "path": "data/demoWorks.geojson",
+      "count": 6,
+      "sha256": "1a2efd7a68cf7dadbcf85a38ffe10e1f5a84d278f4712566b3ed75e0066a388f"
     }
   ],
   "methodology": "Inventario descriptivo de registros públicos. Filtros por punto representativo, no tiempo de caminata. Conteos de objetos heterogéneos no son indicadores de calidad de vida. No se trasladaron datos ni código del portal de referencia. Edificación cartográfica desagregada en piezas poligonales, no inventario de edificios únicos.",
   "buildings_added_at": "2026-10-14T21:08:48.379862+00:00",
   "updated_at": "2026-10-15T00:14:41.232100+00:00",
-  "new_domains_note": "Tablas comunales y referencias documentales no son capas espaciales; SEIA no es cartera ejecutada; Landsat es una escena fechada."
+  "new_domains_note": "Tablas comunales y referencias documentales no son capas espaciales; SEIA no es cartera ejecutada; Landsat es una escena fechada.",
+  "prototype_updated_at": "2026-10-15"
 }

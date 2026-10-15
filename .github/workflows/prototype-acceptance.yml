@@ -1,0 +1,35 @@
+name: Municipal prototype acceptance
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test browsers
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Check source and analysis invariants
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          node --check atlas/analysis.mjs
+          node --check atlas/indicators.mjs
+          node tests/test_analysis.mjs
+      - name: Validate municipal prototype interactions
+        run: python tests/test_prototype.py
+      - name: Validate existing data and interactions
+        run: |
+          python tests/test_atlas.py
+          python tests/test_pending.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prototype-acceptance-evidence
+          path: test-results/
+          retention-days: 14

@@ -1,0 +1,20 @@
+{
+  "contract_version": "0.1-conceptual",
+  "status": "not_connected",
+  "description": "Contrato conceptual para una futura integración municipal. No contiene un endpoint operativo, claves ni una conexión activa.",
+  "transport": {"mode": "future_server_side_read_only", "endpoint": null, "authentication": "secret_on_server_only", "browser_calls_to_private_api": false},
+  "format": "GeoJSON FeatureCollection in WGS84 / EPSG:4326",
+  "required_dataset_metadata": ["dataset_id", "provider", "source_url", "license", "coverage", "observed_at", "retrieved_at", "refresh_frequency", "quality_state", "evidence_type"],
+  "required_feature_properties": ["id", "layer", "name", "x", "y", "evidence_type"],
+  "evidence_types": ["administrative", "observed", "derived", "estimated", "demo"],
+  "quality_states": ["fresh", "stale", "partial", "error", "empty_validated"],
+  "pipeline": ["authorize_fields_and_purpose", "ingest_read_only", "validate_geometry_ids_dates_and_counts", "publish_versioned_snapshot", "retain_last_valid_snapshot_on_failure"],
+  "privacy": {"exclude_by_default": ["RUT", "personal_email", "personal_phone", "individual_trajectories"], "public_release": "Only datasets and fields explicitly authorized for public use"},
+  "domains": {
+    "commercial_licenses": ["establishment_id", "business_category", "street", "validity", "public_location"],
+    "public_works": ["project_id", "stage", "funding_status", "budget_unit", "schedule", "location"],
+    "zoning": ["zone_id", "legal_instrument", "effective_date", "permitted_uses", "verified_geometry"],
+    "lighting": ["asset_id", "location", "observed_status", "maintenance_date"],
+    "pedestrians": ["segment_id", "interval_start", "interval_end", "timezone", "count", "method"]
+  }
+}
