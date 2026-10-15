@@ -1,5 +1,5 @@
 /* Non-spatial observations must never be counted or located as map objects. */
-import {escapeHTML as esc} from './core.mjs';
+import {escapeHTML as esc} from './core.mjs?v=060';
 export function installIndicators({manifest,openDialog,download,safeLink}) {
  const $=id=>document.getElementById(id),cache=new Map();
  const find=id=>manifest.datasets.find(x=>x.id===id);

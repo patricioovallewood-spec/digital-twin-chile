@@ -1,5 +1,5 @@
 /* Deterministic descriptive analysis of the selected records. No external requests. */
-import {normalize,escapeHTML as esc} from './core.mjs';
+import {normalize,escapeHTML as esc} from './core.mjs?v=060';
 const number=v=>typeof v==='number'&&Number.isFinite(v)&&v>=0;
 const fmt=(v,d=0)=>v===null||v===undefined?'Sin dato':Number(v).toLocaleString('es-CL',{maximumFractionDigits:d});
 function ringArea(ring){

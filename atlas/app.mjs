@@ -1,6 +1,6 @@
-import {VERSION,escapeHTML as esc,filterFeatures,circleFeature,emptyCollection,csv,serialise} from './core.mjs';
-import {enrichCensus,summarize,metricsHTML,streetGroups,comparisonHTML} from './analysis.mjs';
-import {installIndicators} from './indicators.mjs';
+import {VERSION,escapeHTML as esc,filterFeatures,circleFeature,emptyCollection,csv,serialise} from './core.mjs?v=060';
+import {enrichCensus,summarize,metricsHTML,streetGroups,comparisonHTML} from './analysis.mjs?v=060';
+import {installIndicators} from './indicators.mjs?v=060';
 const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('es-CL');
 const state={active:new Set(),query:'',radius:0,focus:null,business:'all',heightQuality:'all',permitYear:'all',projectState:'all',street:'',censusMetric:'persons',selectionMode:'consult',base:'satellite',mode:'points',three:true};
 const cache=new Map(),filtered=new Map(),loads=new Map(),errors=new Map(),signatures=new Map();
