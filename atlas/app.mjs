@@ -1,7 +1,6 @@
 import {VERSION,escapeHTML as esc,filterFeatures,circleFeature,emptyCollection,csv,serialise} from './core.mjs?v=060';
 import {enrichCensus,summarize,metricsHTML,streetGroups,comparisonHTML} from './analysis.mjs?v=060';
 import {installIndicators} from './indicators.mjs?v=060';
-import {installEntrepreneurship} from './entrepreneurship.mjs?v=061';
 const $=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('es-CL');
 const state={active:new Set(),query:'',radius:0,focus:null,business:'all',heightQuality:'all',permitYear:'all',projectState:'all',street:'',censusMetric:'persons',selectionMode:'consult',base:'satellite',mode:'points',three:true};
 const cache=new Map(),filtered=new Map(),loads=new Map(),errors=new Map(),signatures=new Map();
@@ -279,7 +278,7 @@ async function start(){
   manifest=await (await fetchTimed('data/manifest.json?v='+VERSION)).json();
   if(!Array.isArray(manifest.datasets)||!manifest.territory)throw Error('Manifiesto no válido.');
   defs=manifest.datasets;defs.forEach(d=>colors[d.id]=d.color);$('datasetCount').textContent=defs.filter(d=>d.status==='ready'&&!d.is_demo).length+' + '+defs.filter(d=>d.is_demo).length;$('snapshotDate').textContent='INSTANTÁNEA / '+date(manifest.built_at);$('provenance').textContent='Fuentes y periodos distintos · consulta el catálogo · '+manifest.territory.scope;
-  layerList();restore();controls();if(window.innerWidth<=700){$('explorer').hidden=true;$('panelBtn').setAttribute('aria-expanded','false');}installIndicators({manifest,openDialog,download,safeLink});installEntrepreneurship({openDialog,download});initMap();ensureActive();
+  layerList();restore();controls();if(window.innerWidth<=700){$('explorer').hidden=true;$('panelBtn').setAttribute('aria-expanded','false');}installIndicators({manifest,openDialog,download,safeLink});initMap();ensureActive();
   window.DTC=Object.freeze({version:VERSION,snapshot:()=>({version:VERSION,active:[...state.active],loading:[...loads.keys()].filter(id=>state.active.has(id)),errors:[...errors.keys()].filter(id=>state.active.has(id)),counts:Object.fromEntries([...filtered].map(([k,f])=>[k,f.length])),count:currentRecords.length,records:currentRecords.map(f=>({id:f.id,layer:f.properties.layer,rubro:f.properties.rubro})),radius:state.radius,focus:state.focus,street:state.street,censusMetric:state.censusMetric,selectionMode:state.selectionMode,demoCount:currentRecords.filter(f=>f.properties.evidence_type==='demo').length,projectState:state.projectState,mapReady,base:state.base,mode:state.mode,three:state.three,sourceCount:defs.filter(d=>d.status==='ready').length}),analysisSnapshot:()=>selectionSummary(),streetSnapshot:()=>streetGroups(currentRecords),mapSnapshot:()=>map?{loaded:map.loaded(),pitch:map.getPitch(),renderedCount:mapReady?map.queryRenderedFeatures().filter(f=>f.layer.id.startsWith('dtc-')).length:0,ownLayers:(map.getStyle()?.layers||[]).filter(l=>l.id.startsWith('dtc-')).map(l=>({id:l.id,visibility:map.getLayoutProperty(l.id,'visibility')}))}:null});
  }catch(error){status('No se pudo abrir el catálogo: '+error.message,'error');$('mapFailure').hidden=false;$('mapFailure').textContent='El catálogo o sus archivos no están disponibles. No se sustituyen fuentes fallidas por datos de demostración.';}
 }
