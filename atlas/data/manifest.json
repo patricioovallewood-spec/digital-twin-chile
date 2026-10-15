@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "territory": {
     "name": "Ñuñoa",
     "code": "13120",
@@ -40,15 +40,21 @@
     },
     {
       "id": "births",
-      "name": "Natalidad y estadísticas vitales",
+      "name": "Natalidad y mortalidad · indicadores",
       "group": "Personas",
-      "status": "pending",
-      "note": "Pendiente conectar series por residencia, año y territorio.",
-      "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
-      "url": "https://www.ine.gob.cl/",
-      "count": null,
-      "color": "#6c808c"
+      "status": "tabular",
+      "note": "Indicadores agregados, no nacimientos georreferenciados. Los filtros espaciales no se aplican. No son datos de 2026.",
+      "provider": "BCN · fuente declarada DEIS/MINSAL",
+      "reference": "Años 2019, 2020, 2022 y 2023; reportes BCN 2023–2026",
+      "url": "https://www.bcn.cl/siit/reportescomunales/comunas_v.html?anno=2026&idcom=13120",
+      "count": 36,
+      "color": "#6c808c",
+      "format": "table",
+      "license": "Valores estadísticos públicos con atribución a BCN y DEIS/MINSAL; no se redistribuyen microdatos.",
+      "completion": "partial",
+      "path": "data/births.json",
+      "sha256": "bff32de03823f9c024d1696015dfda80c1693f583a34b54e2b427e18ad7be228",
+      "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
     },
     {
       "id": "boundary",
@@ -153,15 +159,21 @@
     },
     {
       "id": "crime",
-      "name": "Delitos y seguridad",
+      "name": "Seguridad · tasas comunales de denuncias",
       "group": "Seguridad",
-      "status": "pending",
-      "note": "Pendiente serie oficial georreferenciada, escala publicable y denominadores.",
-      "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
-      "url": "https://cead.spd.gov.cl/",
-      "count": null,
-      "color": "#6c808c"
+      "status": "tabular",
+      "note": "Tasas comunales de dos grupos de denuncias. No ubica delitos por calle. No usar como mapa de riesgo individual ni concatenar clasificaciones distintas.",
+      "provider": "BCN · fuente declarada CEAD/SPD",
+      "reference": "2023–2025 · clasificación de la edición BCN 2026",
+      "url": "https://www.bcn.cl/siit/reportescomunales/comunas_v.html?anno=2026&idcom=13120",
+      "count": 18,
+      "color": "#6c808c",
+      "format": "table",
+      "license": "Estadísticas agregadas públicas; atribución BCN y organismo productor.",
+      "completion": "partial",
+      "path": "data/crime.json",
+      "sha256": "5a7939929e772e1e2032546ba91e090939ba44e7a4db78be6fe4fd460fc60793",
+      "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
     },
     {
       "id": "culture",
@@ -265,13 +277,14 @@
       "id": "licenses",
       "name": "Patentes comerciales",
       "group": "Economía",
-      "status": "pending",
-      "note": "Pendiente registro autorizado de establecimientos; OSM no reemplaza patentes.",
+      "status": "requires_access",
+      "note": "Pendiente registro de patentes autorizadas y vigencia. El directorio público ArcGIS revisado no identificó una capa de patentes. OSM no acredita autorización. Solicitar extracto municipal sin RUT ni domicilios privados.",
       "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
+      "reference": "Sin registros operativos conectados",
       "url": "",
       "count": null,
-      "color": "#6c808c"
+      "color": "#6c808c",
+      "completion": "blocked"
     },
     {
       "id": "lights",
@@ -326,13 +339,14 @@
       "id": "municipal",
       "name": "Conectores municipales",
       "group": "Gestión",
-      "status": "pending",
-      "note": "Requiere convenio, permisos y API de solo lectura. No hay sistemas privados conectados.",
+      "status": "requires_access",
+      "note": "Contrato de integración y validador preparados; sin API privada conectada. Requiere autorización municipal, endpoint, campos permitidos y credenciales guardadas fuera del código.",
       "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
+      "reference": "Sin registros operativos conectados",
       "url": "",
       "count": null,
-      "color": "#6c808c"
+      "color": "#6c808c",
+      "completion": "blocked"
     },
     {
       "id": "parks",
@@ -358,13 +372,14 @@
       "id": "pedestrians",
       "name": "Flujos peatonales por hora",
       "group": "Movilidad",
-      "status": "pending",
-      "note": "Requiere mediciones, sensores o un estudio con cobertura y metodología documentadas.",
+      "status": "requires_access",
+      "note": "Requiere conteos por tramo y fecha/hora, sensores o estudio documentado. No se identificó en esta revisión una serie abierta horaria validada para todas las calles de Ñuñoa; no se infiere flujo desde comercios, población ni luminarias.",
       "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
+      "reference": "Sin registros operativos conectados",
       "url": "",
       "count": null,
-      "color": "#6c808c"
+      "color": "#6c808c",
+      "completion": "blocked"
     },
     {
       "id": "permits",
@@ -398,15 +413,26 @@
     },
     {
       "id": "projects",
-      "name": "Cartera de inversiones",
+      "name": "Proyectos SEIA · ubicación de referencia",
       "group": "Planificación",
-      "status": "pending",
-      "note": "Pendiente distinguir anunciado, aprobado, financiado y en ejecución.",
-      "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
-      "url": "https://sig.sea.gob.cl/mapadeproyectos/",
-      "count": null,
-      "color": "#6c808c"
+      "status": "ready",
+      "note": "Puntos de proyectos EIA/DIA que intersectan el límite piloto, no huellas ni áreas de impacto. Puede omitir proyectos multicomunales cuyo punto quede fuera. Estado ambiental no equivale a financiamiento, permiso de obra ni ejecución. No constituye la cartera completa municipal. Se excluyen campos personales y montos cuya unidad no se verificó.",
+      "provider": "Servicio de Evaluación Ambiental (SEA)",
+      "reference": "Registro SEIA consultado el 2026-10-15",
+      "url": "https://arcgisv11.sea.gob.cl/server/rest/services/WEBServices/ProyectosSEIA/MapServer",
+      "count": 87,
+      "color": "#ffcf77",
+      "format": "geojson",
+      "geometry": "point",
+      "license": "Servicio público del SEA; atribución y respeto a condiciones del organismo. No incluye expedientes completos.",
+      "completion": "partial",
+      "source_layers": [
+        "https://arcgisv11.sea.gob.cl/server/rest/services/WEBServices/ProyectosSEIA/MapServer/1",
+        "https://arcgisv11.sea.gob.cl/server/rest/services/WEBServices/ProyectosSEIA/MapServer/2"
+      ],
+      "path": "data/projects.geojson",
+      "sha256": "f5ad3eb64538c839a2a07e9ffd7bb7431ec48cd156fbb08e0a015757faa0fd1e",
+      "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
     },
     {
       "id": "trees",
@@ -439,17 +465,25 @@
     },
     {
       "id": "zoning",
-      "name": "Plan regulador vigente",
+      "name": "Plan regulador · expediente documental",
       "group": "Planificación",
-      "status": "pending",
-      "note": "Pendiente validar ordenanza, planos y modificaciones vigentes.",
-      "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
-      "url": "https://ide.minvu.cl/",
-      "count": null,
-      "color": "#6c808c"
+      "status": "reference",
+      "note": "Referencias oficiales disponibles. Pendiente validar polígonos, ordenanza consolidada y modificaciones para análisis normativo predial.",
+      "provider": "Municipalidad de Ñuñoa",
+      "reference": "Página municipal consultada el 2026-10-15",
+      "url": "https://www.nunoa.cl/plan-regulador-comunal/",
+      "count": 83,
+      "color": "#6c808c",
+      "format": "documents",
+      "license": "Enlaces al repositorio municipal; no se redistribuyen documentos.",
+      "completion": "partial",
+      "path": "data/zoning.json",
+      "sha256": "0422e40374a99cf88e81e233c9bd0c49ea65861ed8355417a2e159458c00a062",
+      "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
     }
   ],
   "methodology": "Inventario descriptivo de registros públicos. Filtros por punto representativo, no tiempo de caminata. Conteos de objetos heterogéneos no son indicadores de calidad de vida. No se trasladaron datos ni código del portal de referencia. Edificación cartográfica desagregada en piezas poligonales, no inventario de edificios únicos.",
-  "buildings_added_at": "2026-10-14T21:08:48.379862+00:00"
+  "buildings_added_at": "2026-10-14T21:08:48.379862+00:00",
+  "updated_at": "2026-10-15T00:03:54.168141+00:00",
+  "new_domains_note": "Tablas comunales y referencias documentales no son capas espaciales; SEIA no es cartera ejecutada; Landsat es una escena fechada."
 }
