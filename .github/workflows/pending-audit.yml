@@ -1,0 +1,26 @@
+name: Pending source audit
+on:
+  push:
+    branches: ['feat/pending-datasets-v05']
+    paths: ['scripts/probe_pending.py', '.github/workflows/pending-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install requests beautifulsoup4
+      - run: python scripts/probe_pending.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pending-source-audit
+          path: |
+            pending-audit/
+            atlas/
+            scripts/
+            tests/
+          retention-days: 14
