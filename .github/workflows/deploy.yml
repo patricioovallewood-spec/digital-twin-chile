@@ -30,10 +30,12 @@ jobs:
           node --check atlas/core.mjs
           node --check atlas/indicators.mjs
           node --check atlas/analysis.mjs
+          node --check atlas/entrepreneurship.mjs
           node tests/test_analysis.mjs
           python tests/test_atlas.py
           python tests/test_pending.py
           python tests/test_prototype.py
+          python tests/test_entrepreneurship.py
       - name: Prepare Pages
         uses: actions/configure-pages@v5
       - name: Upload application only
@@ -53,7 +55,7 @@ jobs:
           for attempt in range(18):
               try:
                   code=urllib.request.urlopen(url,timeout=15).read().decode()
-                  if "VERSION='0.6.0'" in code:
+                  if "VERSION='0.6.1'" in code:
                       break
               except Exception:
                   pass
