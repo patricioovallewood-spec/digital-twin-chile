@@ -37,6 +37,7 @@ def browser(engine,name,url):
  # Explicit area mode changes center even when the click lands on a feature.
  before=page.evaluate('DTC.snapshot().focus')
  page.locator('#map').click(position={'x':690,'y':300});settle(page)
+ page.wait_for_function('(before)=>JSON.stringify(DTC.snapshot().focus)!==JSON.stringify(before)',arg=before,timeout=10000)
  after=page.evaluate('DTC.snapshot().focus');assert before!=after
  # Spatial reset and street grouping of actual OSM records, not fabricated segments.
  page.select_option('#quickRadius','0');page.click('#streetsNav');expect(page.locator('#streetTable')).to_be_visible()
