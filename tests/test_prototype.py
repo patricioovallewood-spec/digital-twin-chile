@@ -18,6 +18,7 @@ def browser(engine,name,url):
  page.route('https://server.arcgisonline.com/**',lambda route:route.fulfill(content_type='image/png',body=png))
  page.goto(url,wait_until='domcontentloaded',timeout=60000);settle(page)
  page.wait_for_function('DTC.snapshot().mapReady',timeout=30000)
+ page.wait_for_function('document.querySelector("#map canvas").getBoundingClientRect().height>=600',timeout=30000)
  assert page.evaluate('DTC.version')=='0.6.0'
  assert page.evaluate('DTC.snapshot().demoCount')==0
  expect(page.locator('#demoNotice')).to_be_hidden()

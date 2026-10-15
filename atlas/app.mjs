@@ -21,9 +21,13 @@ function initMap(){
  try{
   if(!window.maplibregl)throw Error('No se pudo cargar MapLibre.');
   map=new maplibregl.Map({container:'map',style:mapStyle(),center:manifest.territory.center,zoom:13.8,pitch:state.three?48:0,bearing:-12,attributionControl:false,maxPitch:68});
+  // CSS and font loading can resize the workspace after WebKit initializes the canvas.
+  const resizeObserver=new ResizeObserver(()=>requestAnimationFrame(()=>map?.resize()));
+  resizeObserver.observe($('map'));
+  window.addEventListener('load',()=>map?.resize(),{once:true});
   map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
   map.addControl(new maplibregl.AttributionControl({compact:true,customAttribution:'Capas: Fuentes · © OpenStreetMap contributors · © OpenMapTiles · OpenFreeMap'}),'bottom-right');
-  map.on('style.load',()=>{mapReady=true;signatures.clear();drawAll();});
+  map.on('style.load',()=>{mapReady=true;map.resize();signatures.clear();drawAll();});
   map.on('error',e=>{console.warn('Map source:',e.error?.message||e.message);});
   map.on('moveend',()=>{const c=map.getCenter();$('cameraLabel').textContent=c.lat.toFixed(4)+' / '+c.lng.toFixed(4)+' · Z'+map.getZoom().toFixed(1);});
   map.on('click',e=>{
