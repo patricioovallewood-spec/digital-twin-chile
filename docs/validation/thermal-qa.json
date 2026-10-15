@@ -1,0 +1,19 @@
+{
+  "attempts": [
+    {
+      "scene": "LC09_L2SP_233083_20260915_02_T1",
+      "observed": "2026-09-15T14:33:38.742929Z",
+      "inside_pixels": 18739,
+      "clear_pixels": 18739,
+      "valid_pixels": 18739,
+      "uncertainty_k_median": 2.15,
+      "cells": 787,
+      "retained_coverage": 0.9978654143764342
+    }
+  ],
+  "selected": {
+    "id": "LC09_L2SP_233083_20260915_02_T1",
+    "cells": 787,
+    "coverage": 0.9978654143764342
+  }
+}

@@ -1,0 +1,59 @@
+name: Persist tested pending domains
+on:
+  push:
+    branches: ['feat/pending-datasets-v05']
+    paths: ['.github/workflows/pending-promote.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  persist:
+    if: github.ref == 'refs/heads/feat/pending-datasets-v05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve the exact accepted application artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 38658817533
+          name: pending-acceptance-build
+          path: .accepted
+      - name: Validate acceptance evidence and preserve tested files
+        run: |
+          python - <<'PY'
+          import hashlib,json,pathlib,shutil
+          src=pathlib.Path('.accepted')
+          for report in ['pending-acceptance.json','atlas-report.json']:
+              rows=json.loads((src/'test-results'/report).read_text())
+              assert rows and all(r.get('result')=='PASS' for r in rows)
+              assert {'chromium','webkit'} <= {r.get('browser') for r in rows}
+          m=json.loads((src/'atlas/data/manifest.json').read_text())
+          assert m['version']=='0.5.0'
+          for d in m['datasets']:
+              if d.get('path'):
+                  raw=(src/'atlas'/d['path']).read_bytes()
+                  assert hashlib.sha256(raw).hexdigest()==d['sha256'], d['id']
+          assert next(d for d in m['datasets'] if d['id']=='heat')['count']==787
+          for directory in ['atlas','scripts','tests']:
+              shutil.copytree(src/directory,pathlib.Path(directory),dirs_exist_ok=True)
+          pathlib.Path('docs/validation').mkdir(parents=True,exist_ok=True)
+          for report in ['pending-acceptance.json','atlas-report.json','thermal-qa.json']:
+              shutil.copyfile(src/'test-results'/report,pathlib.Path('docs/validation')/report)
+          print('Accepted data and application verified against hashes and browser evidence.')
+          PY
+          python scripts/finalize_pending.py --prepare
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          node --check atlas/indicators.mjs
+      - name: Persist without modifying workflows
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas scripts tests docs
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: persist accepted v0.5 public datasets and browser-verified controls'
+            git push origin HEAD:feat/pending-datasets-v05
+          fi

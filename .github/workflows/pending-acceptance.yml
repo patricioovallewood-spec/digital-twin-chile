@@ -1,0 +1,59 @@
+name: Pending domains acceptance
+on:
+  push:
+    branches: ['feat/pending-datasets-v05']
+    paths: ['atlas/indicators.mjs','scripts/retry_thermal.py','scripts/upgrade_pending_ui.py','scripts/finalize_pending.py','tests/test_pending.py','.github/workflows/pending-acceptance.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pending-acceptance
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/feat/pending-datasets-v05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install processing and test dependencies
+        run: |
+          pip install requests shapely pyproj numpy rasterio planetary-computer playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Select documented exploratory thermal observation
+        run: |
+          python scripts/finalize_pending.py --prepare
+          python scripts/retry_thermal.py
+      - name: Apply interface and CSV updates
+        run: |
+          python scripts/upgrade_pending_ui.py
+          python scripts/finalize_pending.py --ui
+      - name: Check code and existing behavior
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          node --check atlas/indicators.mjs
+          python tests/test_atlas.py
+      - name: Test new datasets and controls
+        run: python tests/test_pending.py
+      - name: Persist tested work on development branch only
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas .github/workflows/deploy.yml scripts/complete_public_pending.py scripts/retry_thermal.py docs/datos-pendientes-y-accesos.md tests/test_pending.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: tested public data, qualified thermal layer and consistent CSV'
+            git fetch origin feat/pending-datasets-v05
+            git rebase origin/feat/pending-datasets-v05
+            git push origin HEAD:feat/pending-datasets-v05
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pending-acceptance-build
+          path: |
+            atlas/
+            scripts/
+            tests/
+            test-results/
+          retention-days: 14

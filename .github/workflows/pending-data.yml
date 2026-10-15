@@ -1,0 +1,41 @@
+name: Prepare pending public data
+on:
+  push:
+    branches: ['feat/pending-datasets-v05']
+    paths: ['scripts/complete_public_pending.py','.github/workflows/pending-data.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pending-data
+  cancel-in-progress: true
+jobs:
+  data:
+    if: github.ref == 'refs/heads/feat/pending-datasets-v05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install requests beautifulsoup4 shapely pyproj numpy rasterio planetary-computer
+      - name: Build public sources, preserving failures as unavailable
+        run: python scripts/complete_public_pending.py
+      - name: Commit data to development branch only
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas/data
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: verified public indicators and dated geospatial additions'
+            git fetch origin feat/pending-datasets-v05
+            git rebase origin/feat/pending-datasets-v05
+            git push origin HEAD:feat/pending-datasets-v05
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pending-data-build
+          path: |
+            atlas/
+            scripts/complete_public_pending.py
+            test-results/
+          retention-days: 14

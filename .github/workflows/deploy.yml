@@ -28,7 +28,9 @@ jobs:
         run: |
           node --check atlas/app.mjs
           node --check atlas/core.mjs
+          node --check atlas/indicators.mjs
           python tests/test_atlas.py
+          python tests/test_pending.py
       - name: Prepare Pages
         uses: actions/configure-pages@v5
       - name: Upload application only
@@ -38,7 +40,7 @@ jobs:
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published version and live map
+      - name: Verify published version and live controls
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
@@ -48,7 +50,7 @@ jobs:
           for attempt in range(18):
               try:
                   code=urllib.request.urlopen(url,timeout=15).read().decode()
-                  if "VERSION='0.4.0'" in code:
+                  if "VERSION='0.5.0'" in code:
                       break
               except Exception:
                   pass
@@ -57,6 +59,7 @@ jobs:
               raise SystemExit('The expected atlas version is not publicly available yet')
           PY
           python tests/test_atlas.py --live-url "${SITE_URL}?v=${GITHUB_SHA}"
+          python tests/test_pending.py --url "$SITE_URL" --chromium-only
       - uses: actions/upload-artifact@v4
         if: always()
         with:
