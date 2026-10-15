@@ -36,8 +36,13 @@ def browser(engine,name,url):
  page.click('#closeDialog')
  # Explicit area mode changes center even when the click lands on a feature.
  before=page.evaluate('DTC.snapshot().focus')
- page.locator('#map').click(position={'x':690,'y':300});settle(page)
- page.wait_for_function('(before)=>JSON.stringify(DTC.snapshot().focus)!==JSON.stringify(before)',arg=before,timeout=10000)
+ page.evaluate("""()=>{window.clickDebug=[];for(const type of ['pointerdown','mousedown','mouseup','click'])document.querySelector('#map canvas').addEventListener(type,e=>window.clickDebug.push({type:e.type,x:e.clientX,y:e.clientY,target:e.target.tagName}),true)}""")
+ page.locator('#map canvas').click(position={'x':650,'y':360},delay=100);settle(page)
+ try:page.wait_for_function('(before)=>JSON.stringify(DTC.snapshot().focus)!==JSON.stringify(before)',arg=before,timeout=10000)
+ except Exception:
+  print('MAP_CLICK_DEBUG',name,page.evaluate('({events:window.clickDebug,state:DTC.snapshot(),viewport:{width:innerWidth,height:innerHeight,scroll:scrollY},canvas:document.querySelector("#map canvas").getBoundingClientRect().toJSON()})'))
+  page.screenshot(path=str(OUT/(name+'-map-click-failure.png')),full_page=True)
+  raise
  after=page.evaluate('DTC.snapshot().focus');assert before!=after
  # Spatial reset and street grouping of actual OSM records, not fabricated segments.
  page.select_option('#quickRadius','0');page.click('#streetsNav');expect(page.locator('#streetTable')).to_be_visible()
