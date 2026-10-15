@@ -1,0 +1,55 @@
+name: Pending domains acceptance
+on:
+  push:
+    branches: ['feat/pending-datasets-v05']
+    paths: ['atlas/indicators.mjs','scripts/retry_thermal.py','scripts/upgrade_pending_ui.py','tests/test_pending.py','.github/workflows/pending-acceptance.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pending-acceptance
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/feat/pending-datasets-v05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install processing and test dependencies
+        run: |
+          pip install requests shapely pyproj numpy rasterio planetary-computer playwright==1.55.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Select locally usable thermal observation
+        run: python scripts/retry_thermal.py
+      - name: Apply interface update
+        run: python scripts/upgrade_pending_ui.py
+      - name: Check code and existing behavior
+        run: |
+          node --check atlas/app.mjs
+          node --check atlas/core.mjs
+          node --check atlas/indicators.mjs
+          python tests/test_atlas.py
+      - name: Test new datasets and controls
+        run: python tests/test_pending.py
+      - name: Persist tested work on development branch only
+        run: |
+          git config user.name 'Digital Twin Chile CI'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add atlas .github/workflows/deploy.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: tested public pending domains, thermal snapshot and indicators'
+            git fetch origin feat/pending-datasets-v05
+            git rebase origin/feat/pending-datasets-v05
+            git push origin HEAD:feat/pending-datasets-v05
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pending-acceptance-build
+          path: |
+            atlas/
+            scripts/
+            tests/
+            test-results/
+          retention-days: 14
