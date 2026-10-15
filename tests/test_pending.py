@@ -30,6 +30,7 @@ def validate():
  if D['heat']['status']=='ready':
   for f in data('heat')['features']:
    p=f['properties'];assert -80<p['temp_c']<90 and p['valid_fraction']>=.75 and p['valid_pixels']>=5
+   assert 0<=p['uncertainty_mean_k']<=3.0
    assert p['cell_m']==150 and p['native_thermal_m']==100 and p['surface_date'][:10]<='2026-10-14'
  REPORT.append({'test':'new source integrity','result':'PASS','states':{k:{'status':D[k]['status'],'count':D[k].get('count')} for k in ['births','crime','projects','heat','zoning','licenses','pedestrians','municipal']}})
 

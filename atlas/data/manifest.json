@@ -263,15 +263,35 @@
     },
     {
       "id": "heat",
-      "name": "Temperatura superficial",
+      "name": "Temperatura superficial · exploratoria",
       "group": "Ambiente",
-      "status": "pending",
-      "note": "Pendiente producto satelital fechado y procesamiento; no confundir con temperatura del aire.",
-      "provider": "Pendiente de integración",
-      "reference": "Sin datos cargados",
-      "url": "https://www.usgs.gov/landsat-missions",
-      "count": null,
-      "color": "#6c808c"
+      "status": "ready",
+      "note": "Temperatura de SUPERFICIE estimada por satélite, no del aire ni tiempo real. Celdas de 150 m; sensor térmico 100 m, producto a 30 m. Píxeles internos sin relleno, nubes, cirros, sombra o nieve, sin saturación y ST_QA <=3 K (umbral exploratorio del proyecto, no estándar USGS); al menos 75% válidos y 5 internos por celda. Sin dato no significa frío. Escena elegida entre candidatas recientes de baja nubosidad por QA local; no se garantiza ser la adquisición más reciente. No prueba por sí sola una isla de calor. No usar diferencias térmicas pequeñas como evidencia decisoria sin validación terrestre y análisis multitemporal.",
+      "provider": "USGS/NASA Landsat · Microsoft Planetary Computer",
+      "reference": "Escena LC09_L2SP_233083_20260915_02_T1 · 2026-09-15T14:33:38.742929Z",
+      "url": "https://planetarycomputer.microsoft.com/dataset/landsat-c2-l2",
+      "count": 787,
+      "color": "#faac79",
+      "format": "geojson",
+      "geometry": "polygon",
+      "path": "data/heat.geojson",
+      "sha256": "42857f8602965ab250007015fb35b0ad7526a96f7c590a9bc750c2386c6ff0ab",
+      "license": "Datos Landsat de dominio público (USGS); atribución USGS/NASA y Microsoft Planetary Computer.",
+      "retrieved_at": "2026-10-15T00:14:41.232100+00:00",
+      "scene_id": "LC09_L2SP_233083_20260915_02_T1",
+      "observation_time": "2026-09-15T14:33:38.742929Z",
+      "completion": "partial",
+      "valid_pixel_fraction": 0.9979,
+      "scale": 0.00341802,
+      "offset": 149,
+      "source_assets": {
+        "lwir11": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-2/standard/oli-tirs/2026/233/083/LC09_L2SP_233083_20260915_20260916_02_T1/LC09_L2SP_233083_20260915_20260916_02_T1_ST_B10.TIF",
+        "qa_pixel": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-2/standard/oli-tirs/2026/233/083/LC09_L2SP_233083_20260915_20260916_02_T1/LC09_L2SP_233083_20260915_20260916_02_T1_QA_PIXEL.TIF",
+        "qa": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-2/standard/oli-tirs/2026/233/083/LC09_L2SP_233083_20260915_20260916_02_T1/LC09_L2SP_233083_20260915_20260916_02_T1_ST_QA.TIF",
+        "qa_radsat": "https://landsateuwest.blob.core.windows.net/landsat-c2/level-2/standard/oli-tirs/2026/233/083/LC09_L2SP_233083_20260915_20260916_02_T1/LC09_L2SP_233083_20260915_20260916_02_T1_QA_RADSAT.TIF"
+      },
+      "max_pixel_uncertainty_k": 3.0,
+      "quality_policy": "ST_QA <=3 K, criterio exploratorio del proyecto; no estándar USGS. Media QA de píxeles no es incertidumbre de la media."
     },
     {
       "id": "licenses",
@@ -418,7 +438,7 @@
       "status": "ready",
       "note": "Puntos de proyectos EIA/DIA que intersectan el límite piloto, no huellas ni áreas de impacto. Puede omitir proyectos multicomunales cuyo punto quede fuera. Estado ambiental no equivale a financiamiento, permiso de obra ni ejecución. No constituye la cartera completa municipal. Se excluyen campos personales y montos cuya unidad no se verificó.",
       "provider": "Servicio de Evaluación Ambiental (SEA)",
-      "reference": "Registro SEIA consultado el 2026-10-15",
+      "reference": "Instantánea del registro SEIA; presentaciones 1997-08-27 a 2025-12-24",
       "url": "https://arcgisv11.sea.gob.cl/server/rest/services/WEBServices/ProyectosSEIA/MapServer",
       "count": 87,
       "color": "#ffcf77",
@@ -432,7 +452,11 @@
       ],
       "path": "data/projects.geojson",
       "sha256": "f5ad3eb64538c839a2a07e9ffd7bb7431ec48cd156fbb08e0a015757faa0fd1e",
-      "retrieved_at": "2026-10-15T00:03:54.168141+00:00"
+      "retrieved_at": "2026-10-15T00:03:54.168141+00:00",
+      "submission_date_range": [
+        "1997-08-27",
+        "2025-12-24"
+      ]
     },
     {
       "id": "trees",
@@ -484,6 +508,6 @@
   ],
   "methodology": "Inventario descriptivo de registros públicos. Filtros por punto representativo, no tiempo de caminata. Conteos de objetos heterogéneos no son indicadores de calidad de vida. No se trasladaron datos ni código del portal de referencia. Edificación cartográfica desagregada en piezas poligonales, no inventario de edificios únicos.",
   "buildings_added_at": "2026-10-14T21:08:48.379862+00:00",
-  "updated_at": "2026-10-15T00:03:54.168141+00:00",
+  "updated_at": "2026-10-15T00:14:41.232100+00:00",
   "new_domains_note": "Tablas comunales y referencias documentales no son capas espaciales; SEIA no es cartera ejecutada; Landsat es una escena fechada."
 }

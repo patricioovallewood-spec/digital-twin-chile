@@ -1,0 +1,74 @@
+[
+  {
+    "test": "snapshot integrity",
+    "result": "PASS",
+    "counts": {
+      "animals": 26,
+      "boundary": 1,
+      "buildings": 2171,
+      "census": 1322,
+      "commerce": 1059,
+      "culture": 841,
+      "cycling": 15,
+      "education": 185,
+      "health": 118,
+      "heat": 787,
+      "lights": 20456,
+      "mobility": 412,
+      "parks": 168,
+      "permits": 503,
+      "projects": 87,
+      "trees": 59228
+    }
+  },
+  {
+    "test": "filter regression",
+    "browser": "chromium",
+    "result": "PASS",
+    "initial_count": 2751,
+    "business_count": 1177,
+    "pharmacies": 84,
+    "radius_400": 7,
+    "radius_1500": 50,
+    "checks": [
+      "rendered map",
+      "presets",
+      "category off/on",
+      "zero state",
+      "radius",
+      "business",
+      "search",
+      "CSV parity",
+      "no extra requests",
+      "heat mode",
+      "3D toggle",
+      "sources",
+      "mobile layout"
+    ]
+  },
+  {
+    "test": "filter regression",
+    "browser": "webkit",
+    "result": "PASS",
+    "initial_count": 2751,
+    "business_count": 1177,
+    "pharmacies": 84,
+    "radius_400": 7,
+    "radius_1500": 50,
+    "checks": [
+      "rendered map",
+      "presets",
+      "category off/on",
+      "zero state",
+      "radius",
+      "business",
+      "search",
+      "CSV parity",
+      "no extra requests",
+      "heat mode",
+      "3D toggle",
+      "sources",
+      "mobile layout"
+    ]
+  }
+]

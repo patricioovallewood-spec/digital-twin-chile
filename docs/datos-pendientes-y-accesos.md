@@ -42,3 +42,9 @@ El parámetro `--authorized` no sustituye un convenio ni acredita por sí solo a
 - `pending` / `unavailable`: todavía no se obtuvo una versión utilizable.
 
 El estado técnico nunca garantiza exhaustividad, actualidad permanente, licencia irrestricta ni aptitud para cualquier decisión.
+
+### Precisión térmica de esta versión
+
+La primera prueba con ST_QA <=2 K excluyó todas las celdas de las escenas revisadas. Para una visualización exploratoria se adoptó explícitamente ST_QA <=3 K; no es un estándar de aceptación de USGS ni una certificación de exactitud. Se conservan los filtros de nubes, sombra, relleno, saturación, cobertura y fecha. Se publica la incertidumbre media de los píxeles de cada celda, sin interpretarla como un intervalo de confianza de la media. No usar diferencias pequeñas entre celdas para priorizar inversiones ni atribuir causalidad. Se necesita validación terrestre y comparación de varias fechas para un diagnóstico climático.
+
+Fuentes metodológicas: https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature y https://www.usgs.gov/landsat-missions/landsat-collection-2-quality-assessment-bands .

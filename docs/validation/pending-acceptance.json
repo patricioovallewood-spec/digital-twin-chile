@@ -1,0 +1,62 @@
+[
+  {
+    "test": "new source integrity",
+    "result": "PASS",
+    "states": {
+      "births": {
+        "status": "tabular",
+        "count": 36
+      },
+      "crime": {
+        "status": "tabular",
+        "count": 18
+      },
+      "projects": {
+        "status": "ready",
+        "count": 87
+      },
+      "heat": {
+        "status": "ready",
+        "count": 787
+      },
+      "zoning": {
+        "status": "reference",
+        "count": 83
+      },
+      "licenses": {
+        "status": "requires_access",
+        "count": null
+      },
+      "pedestrians": {
+        "status": "requires_access",
+        "count": null
+      },
+      "municipal": {
+        "status": "requires_access",
+        "count": null
+      }
+    }
+  },
+  {
+    "test": "new-domain browser acceptance",
+    "browser": "chromium",
+    "result": "PASS",
+    "project_count": 87,
+    "filter_value": "Aprobado",
+    "filtered_count": 70,
+    "radius_400": 3,
+    "radius_1500": 20,
+    "thermal_status": "ready"
+  },
+  {
+    "test": "new-domain browser acceptance",
+    "browser": "webkit",
+    "result": "PASS",
+    "project_count": 87,
+    "filter_value": "Aprobado",
+    "filtered_count": 70,
+    "radius_400": 3,
+    "radius_1500": 20,
+    "thermal_status": "ready"
+  }
+]
