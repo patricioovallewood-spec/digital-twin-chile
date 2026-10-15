@@ -12,7 +12,7 @@ def data(id):
  raw=(ROOT/'atlas'/D[id]['path']).read_bytes();assert hashlib.sha256(raw).hexdigest()==D[id]['sha256'];return json.loads(raw)
 
 def validate():
- assert M['version']=='0.5.0'
+ assert M['version']=='0.6.0'
  for id in ['births','crime']:
   d=data(id);assert D[id]['status']=='tabular' and d['type']=='IndicatorTable'
   assert len(d['rows'])==D[id]['count'] and len({x['id'] for x in d['rows']})==len(d['rows'])
@@ -46,7 +46,7 @@ def browser(engine,name,url):
  png=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==')
  page.route('https://server.arcgisonline.com/**',lambda r:r.fulfill(content_type='image/png',body=png))
  page.goto(url,wait_until='domcontentloaded');settle(page)
- assert page.evaluate('DTC.version')=='0.5.0'
+ assert page.evaluate('DTC.version')=='0.6.0'
  initial=page.evaluate('DTC.snapshot().count');page.click('#indicatorsNav')
  expect(page.locator('#indicatorTable')).to_be_visible(timeout=20000)
  page.select_option('#indicatorYear','2023');expect(page.locator('#indicatorTable tbody tr')).to_have_count(3)

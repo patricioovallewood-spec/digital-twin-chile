@@ -1,3 +1,7 @@
+## Atlas municipal 0.6
+
+Consulta territorial, indicadores cruzados, comercio por calle, comparación de dos entornos y capas DEMO de zonificación y obras claramente separadas. Conserva las instantáneas del piloto de Ñuñoa y el expediente oficial del PRC. Las integraciones privadas siguen sin conectar. [Alcance y metodología](docs/prototipo-06.md).
+
 # Digital Twin Chile · Atlas 0.4
 
 Infraestructura de inteligencia territorial orientada al **bien público, sin propósito comercial**. Esta entrega es un piloto de Ñuñoa, no un gemelo predictivo de todas las comunas de Chile.
