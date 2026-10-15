@@ -133,7 +133,7 @@ function markPreset(name){document.querySelectorAll('[data-preset]').forEach(b=>
 function preset(name){
  state.active=new Set((presets[name]||presets.overview).filter(id=>defs.some(d=>d.id===id&&d.status==='ready')));
  const missing=(presets[name]||[]).filter(id=>!defs.some(d=>d.id===id&&d.status==='ready'));if(missing.length)toast('Sin datos preparados para: '+missing.join(', ')+'. Consulta Fuentes.');
- state.street='';$('streetFilter').value='';state.query='';state.business='all';state.heightQuality='all';state.permitYear='all';state.projectState='all';$('projectState').value='all';$('search').value='';$('business').value='all';$('heightQuality').value='all';$('permitYear').value='all';markPreset(name);selectedFeature=null;$('featureDetail').innerHTML='<span class="muted">Selecciona un objeto para ver su ficha.</span>';
+ state.street='';$('streetFilter').value='';state.query='';state.business='all';state.heightQuality='all';state.permitYear='all';state.projectState='all';$('projectState').value='all';$('search').value='';$('business').value='all';$('heightQuality').value='all';$('permitYear').value='all';markPreset(name);$('inspector').scrollTop=0;selectedFeature=null;$('featureDetail').innerHTML='<span class="muted">Selecciona un objeto para ver su ficha.</span>';
  if(name==='buildings'){state.three=true;$('threeBtn').setAttribute('aria-pressed','true');map?.easeTo({pitch:55,duration:650});}
  ensureActive();
 }
@@ -173,7 +173,7 @@ function setRadius(radius){
  if(!radius)state.focus=null;
  $('radius').value=String(radius);$('quickRadius').value=String(radius);selectedFeature=null;render();
 }
-function scopeDescription(){return (state.radius?'Radio '+fmt(state.radius)+' m centrado en '+state.focus.map(v=>v.toFixed(5)).join(', '):'Todo el piloto de Ñuñoa')+(state.query?' · búsqueda: '+state.query:'')+(state.street?' · calle de comercio/salud: '+state.street:'')+' · capas: '+[...state.active].join(', ');}
+function scopeDescription(){return (state.radius?'Radio '+fmt(state.radius)+' m centrado en '+state.focus.map(v=>v.toFixed(5)).join(', '):'Todo el piloto de Ñuñoa')+(state.query?' · búsqueda: '+state.query:'')+(state.street?' · calle de comercio/salud: '+state.street:'')+' · capas: '+[...state.active].map(id=>defs.find(d=>d.id===id)?.name||id).join(', ');}
 function captureZone(){return {summary:summarize(currentRecords,state.active),scope:scopeDescription(),captured_at:new Date().toISOString()};}
 function renderIndicators(){
  $('selectionIndicators').innerHTML=metricsHTML(summarize(currentRecords,state.active),true);
