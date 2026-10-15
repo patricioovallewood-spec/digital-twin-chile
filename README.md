@@ -2,7 +2,7 @@
 
 Consulta territorial, indicadores cruzados, comercio por calle, comparación de dos entornos y capas DEMO de zonificación y obras claramente separadas. Conserva las instantáneas del piloto de Ñuñoa y el expediente oficial del PRC. Las integraciones privadas siguen sin conectar. [Alcance y metodología](docs/prototipo-06.md).
 
-# Digital Twin Chile · Atlas 0.4
+# Digital Twin Chile · Atlas 0.6
 
 Infraestructura de inteligencia territorial orientada al **bien público, sin propósito comercial**. Esta entrega es un piloto de Ñuñoa, no un gemelo predictivo de todas las comunas de Chile.
 
@@ -33,7 +33,7 @@ Atribución: **OpenFreeMap · © OpenMapTiles · © OpenStreetMap contributors**
 
 ### Precauciones de interpretación
 
-- Censo: personas por manzana en 2024; no población actual ni densidad automática. Nulos/valores de supresión no son ceros.
+- Censo: personas por manzana en 2024; densidad derivada con el área de manzanas completas. No población actual ni población exacta del radio. Nulos/valores de supresión no son ceros.
 - Proximidad: distancia en línea recta al punto representativo de cada objeto; no recorrido caminable, entrada del edificio ni distribución proporcional de población.
 - Alumbrado y árboles: catastro fechado; no estado operativo ni fallas en tiempo real.
 - Ciclovías y permisos: series históricas según el manifiesto; no red actual ni cartera vigente de inversiones.
@@ -58,10 +58,13 @@ Abrir `http://localhost:8000`. La interfaz requiere JavaScript/WebGL; las tesela
 ```
 pip install playwright==1.55.0
 python -m playwright install --with-deps chromium webkit
+node tests/test_analysis.mjs
 python tests/test_atlas.py
+python tests/test_pending.py
+python tests/test_prototype.py
 ```
 
-Las pruebas usan las instantáneas reales del piloto. Aíslan el proveedor de mapa base durante regresión; la comprobación posterior al despliegue utiliza el mapa base público real. Comprueban integridad, filtros, ceros, radios, búsqueda, exportación, persistencia sin nuevas descargas, renderizado, 3D, catálogo y móvil. No se usan registros inventados de ciudad.
+Las pruebas usan las instantáneas reales del piloto. Aíslan el proveedor de mapa base durante regresión; la comprobación posterior al despliegue utiliza el mapa base público real. Comprueban integridad, filtros, ceros, radios, búsqueda, exportación, persistencia sin nuevas descargas, renderizado, 3D, catálogo y móvil. Las regresiones de fuentes públicas usan sus instantáneas reales. Las pruebas del escenario DEMO comprueban por separado sus datos sintéticos, avisos y exclusión de los indicadores reales.
 
 ## Preparación y actualización
 
@@ -71,6 +74,6 @@ GitHub Pages despliega exclusivamente `atlas/` desde `main`, después de las pru
 
 ## Pendiente
 
-Cobertura multicomuna; PRC y modificaciones vigentes; patentes autorizadas; natalidad; delitos a escala publicable; flujos peatonales medidos; imágenes térmicas procesadas; cartera de inversiones con etapas; actualización incremental; conectores municipales privados; validación de indicadores y simulaciones. Las capas sin datos no simulan resultados.
+Cobertura multicomuna; zonificación predial validada y modificaciones vigentes del PRC; patentes autorizadas; flujos peatonales medidos; cartera municipal de inversiones con etapas; actualización incremental y conectores privados. Las demostraciones opcionales de zonificación y obras no completan esas fuentes pendientes. La natalidad y seguridad comunales, el expediente documental del PRC, SEIA y la escena térmica de septiembre de 2026 se conservan con las limitaciones documentadas de la versión 0.5.
 
 **Datos abiertos. Inteligencia compartida. Mejores decisiones.**

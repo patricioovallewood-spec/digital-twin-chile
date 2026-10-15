@@ -49,7 +49,9 @@ def browser(engine,name,url):
  assert page.evaluate('DTC.snapshot().counts.commerce')==groups['rows'][0]['count']
  with page.expect_download() as item:page.click('#exportCsv')
  rows=list(csv.DictReader(io.StringIO(pathlib.Path(item.value.path()).read_text(encoding='utf-8-sig'))));assert len(rows)==page.evaluate('DTC.snapshot().count')
- assert all(r['calle']==groups['rows'][0]['name'] for r in rows)
+ street_rows=[r for r in rows if r['capa']=='Comercios y gastronomía']
+ assert len(street_rows)==groups['rows'][0]['count']
+ assert all(r['calle']==groups['rows'][0]['name'] for r in street_rows)
  # Metric changes without replacing the source, observed map style is checked.
  page.locator('.rail [data-preset=people]').click();settle(page)
  page.locator('.settings summary').click();page.select_option('#censusMetric','density')
