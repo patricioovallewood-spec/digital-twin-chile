@@ -21,12 +21,12 @@ jobs:
           node --check atlas/analysis.mjs
           node --check atlas/indicators.mjs
           node tests/test_analysis.mjs
+      - name: Validate municipal prototype interactions
+        run: python tests/test_prototype.py
       - name: Validate existing data and interactions
         run: |
           python tests/test_atlas.py
           python tests/test_pending.py
-      - name: Validate municipal prototype interactions
-        run: python tests/test_prototype.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
